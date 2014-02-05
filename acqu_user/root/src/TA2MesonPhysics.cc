@@ -186,21 +186,18 @@ void TA2MesonPhysics::PostInit()
   }
 
   KinFitter = new TA2CBKinematicFitter(2, 1, 0);
-
-  //Call master default PostInit()
-  TA2Physics::PostInit();
 }
 
 //-----------------------------------------------------------------------------
 
 void TA2MesonPhysics::Reconstruct()
 {
+  //Perform basic physics tasks
+  TA2BasePhysics::Reconstruct();
+
   Double_t dTime;
   Int_t iWindow;
   TLorentzVector P4Miss;
-
-  //Perform basic physics tasks
-  TA2BasePhysics::Reconstruct();
 
   //Initialise array counters
   VarInit();

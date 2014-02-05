@@ -338,6 +338,115 @@ Bool_t CaLibReader_t::ApplyTAPScalib(TA2MyTAPS_BaF2PWO* det)
 }
 
 //______________________________________________________________________________
+Bool_t CaLibReader_t::ApplyTAPScalib(TA2TAPS_BaF2* det)
+{
+    // Read calibration from database using the detector pointer 'det'.
+    // Return kTRUE on success and kFALSE if an error occured.
+    
+    // get the number of detector elements
+    Int_t nElem = det->GetNelement();
+
+    // TAPS energy calibration
+    if (fTAPSenergy)
+    {
+        Double_t e0_lg[nElem], e0_sg[nElem];
+        Double_t e1_lg[nElem], e1_sg[nElem];
+      
+        // read ADC LG pedestal data
+        if (!ReadParameters("taps_lg_e0", e0_lg, nElem)) return kFALSE;
+
+        // read ADC SG pedestal data
+        if (!ReadParameters("taps_sg_e0", e0_sg, nElem)) return kFALSE;
+    
+        // read ADC LG gain data
+        if (!ReadParameters("taps_lg_e1", e1_lg, nElem)) return kFALSE;
+
+        // read ADC SG gain data
+        if (!ReadParameters("taps_sg_e1", e1_sg, nElem)) return kFALSE;
+        
+        // loop over detector elements
+        for (Int_t i = 0; i < nElem; i++)
+	{
+	    // set LG ADC pedestal
+	    det->GetLGElement(i)->SetA0(e0_lg[i]);
+	  
+	    // set SG ADC pedestal
+	    det->GetSGElement(i)->SetA0(e0_sg[i]);
+	  
+	    // set LG ADC gain
+	    det->GetLGElement(i)->SetA1(e1_lg[i]);
+	  
+	    // set SG ADC gain
+	    det->GetSGElement(i)->SetA1(e1_sg[i]);
+        }
+        
+        Info("ApplyTAPScalib", "TAPS energy calibration was applied");
+    } 
+
+    // TAPS time calibration
+    if (fTAPStime)
+    {  
+        Double_t t0[nElem], t1[nElem];
+        
+        // read TDC offset data
+        if (!ReadParameters("taps_t0", t0, nElem)) return kFALSE;
+        
+        // read TDC gain data
+        if (!ReadParameters("taps_t1", t1, nElem)) return kFALSE;
+
+        // loop over detector elements
+        for (Int_t i = 0; i < nElem; i++)
+	{
+	    // set LG TDC offset
+	    det->GetLGElement(i)->SetT0(t0[i]);
+	  
+	    // set LG TDC gain
+	    det->GetLGElement(i)->SetT1(t1[i]);
+        }
+
+        Info("ApplyTAPScalib", "TAPS time calibration was applied");
+    }
+    
+    // TAPS quadratic energy correction
+    if (fTAPSquadEnergy)
+    {
+        // create arrays
+        if (!fTAPSQuadEnergyPar0) fTAPSQuadEnergyPar0 = new Double_t[nElem];
+        if (!fTAPSQuadEnergyPar1) fTAPSQuadEnergyPar1 = new Double_t[nElem];
+
+        // read quadratic energy correction data
+        if (!ReadParameters("taps_equad0", fTAPSQuadEnergyPar0, nElem) ||
+            !ReadParameters("taps_equad1", fTAPSQuadEnergyPar1, nElem))
+        {
+            fTAPSquadEnergy = kFALSE;
+            return kFALSE;
+        }
+
+        Info("ApplyTAPScalib", "TAPS quadratic energy correction was read");
+    }
+    
+    // TAPS LED thresholds
+    if (fTAPSled)
+    {
+        // create arrays
+        if (!fTAPSLED1Thr) fTAPSLED1Thr = new Double_t[nElem];
+        if (!fTAPSLED2Thr) fTAPSLED2Thr = new Double_t[nElem];
+
+        // read LED threshold data
+        if (!ReadParameters("taps_led1", fTAPSLED1Thr, nElem) ||
+            !ReadParameters("taps_led2", fTAPSLED2Thr, nElem))
+        {
+            fTAPSled = kFALSE;
+            return kFALSE;
+        }
+
+        Info("ApplyTAPScalib", "TAPS LED thresholds were read");
+    }
+  
+    return kTRUE;
+}
+
+//______________________________________________________________________________
 Bool_t CaLibReader_t::ApplyPIDcalib(TA2Detector* det)
 {
     // Read calibration from database using the detector pointer 'det'.

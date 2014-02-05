@@ -23,6 +23,7 @@
 #include "TF1.h"
 
 #include "TA2MyTAPS_BaF2PWO.h"
+#include "TA2TAPS_BaF2.h"
 
 
 class CaLibReader_t 
@@ -70,6 +71,7 @@ public:
     Bool_t ApplyTAGGcalib(TA2Detector* det);
     Bool_t ApplyCBcalib(TA2Detector* det);
     Bool_t ApplyTAPScalib(TA2MyTAPS_BaF2PWO* det);
+    Bool_t ApplyTAPScalib(TA2TAPS_BaF2* det);
     Bool_t ApplyPIDcalib(TA2Detector* det);
     Bool_t ApplyVetocalib(TA2Detector* det);
 

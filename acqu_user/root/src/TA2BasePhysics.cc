@@ -20,7 +20,7 @@ ClassImp(TA2BasePhysics)
 
 //-----------------------------------------------------------------------------
 
-TA2BasePhysics::TA2BasePhysics(const char* Name, TA2Analysis* Analysis) : TA2Physics(Name, Analysis)
+TA2BasePhysics::TA2BasePhysics(const char* Name, TA2Analysis* Analysis) : TA2AccessSQL(Name, Analysis)
 {
   //Pointers are declared in TA2Physics, but no memory is allocated. So, here 'dummy' content is
   //produced to avoid error messages in Analysis.log due to null pointers used in LoadVariable()
@@ -60,14 +60,6 @@ TA2BasePhysics::TA2BasePhysics(const char* Name, TA2Analysis* Analysis) : TA2Phy
   //By default, produce no TA2Particle filled ROOT files
   bDoROOT = false;
 
-  Tagger = NULL;
-  CB1 = NULL;
-  CB2 = NULL;
-  CB3 = NULL;
-  TAPS = NULL;
-
-  NaI = NULL;
-  BaF2 = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -167,7 +159,7 @@ void TA2BasePhysics::SetConfig(Char_t* line, Int_t key)
       break;
     default:
       //Call default SetConfig()
-      TA2Physics::SetConfig(line, key);
+      TA2AccessSQL::SetConfig(line, key);
       break;
   }
 }
@@ -177,7 +169,7 @@ void TA2BasePhysics::SetConfig(Char_t* line, Int_t key)
 void TA2BasePhysics::LoadVariable()
 {
   //Call default LoadVariable()
-  TA2Physics::LoadVariable();
+  TA2AccessSQL::LoadVariable();
 
   //Trigger histograms
   TA2DataManager::LoadVariable("ESum", &ESum, EDSingleX);
@@ -196,6 +188,9 @@ void TA2BasePhysics::LoadVariable()
 
 void TA2BasePhysics::PostInit()
 {
+  //Call default PostInit()
+  TA2AccessSQL::PostInit();
+
   Int_t nChilds;
   
   //'Permutations:' line in configuration file gives maximum number of particles to be processed
@@ -208,96 +203,16 @@ void TA2BasePhysics::PostInit()
   Photon = new TA2Particle[nPart]; //TA2Particle carrying photon informations
   Proton = new TA2Particle[nPart]; //TA2Particle carrying proton informations
   PiPlus = new TA2Particle[nPart]; //TA2Particle carrying pi+ informations
-
-  //Find pointers to apparati
-  nChilds = ((TList*)(((TA2Analysis*)fParent)->GetChildren()))->GetEntries(); //Get number of TA2Analysis children (i.e. apparati)
-  //Search TA2Analysis for a TA2Tagger instance
-  for(Int_t i=0; i<nChilds; i++)
-  {
-    Tagger = (TA2Tagger*)((TA2Analysis*)fParent)->GetChildType("TA2Tagger", i);
-    if(Tagger) break;
-  }
-    
-  //Search TA2Analysis for a TA2CB instance
-  for(Int_t i=0; i<nChilds; i++)
-  {
-    CB1 = (TA2CB*)((TA2Analysis*)fParent)->GetChildType("TA2CB", i);
-    if(CB1) break;
-  }
-  //Search TA2Analysis for a TA2CrystalBall instance
-  for(Int_t i=0; i<nChilds; i++)
-  {
-    CB2 = (TA2CrystalBall*)((TA2Analysis*)fParent)->GetChildType("TA2CrystalBall", i);
-    if(CB2) break;
-  }
-  //Search TA2Analysis for a TA2CentralApparatus instance
-  for(Int_t i=0; i<nChilds; i++)
-  {
-    CB3 = (TA2CentralApparatus*)((TA2Analysis*)fParent)->GetChildType("TA2CentralApparatus", i);
-    if(CB3) break;
-  }
-
-  //Search TA2Analysis for a TA2TAPS instance
-  for(Int_t i=0; i<nChilds; i++)
-  {
-    TAPS = (TA2Taps*)((TA2Analysis*)fParent)->GetChildType("TA2Taps", i);
-    if(TAPS) break;
-  }
-
-  //Find pointers to some detectors (NaI and BaF2, trigger-relevant)
-  //Search whatever-CB for a TA2CalArray instance
-   if(CB1)
-  {
-    nChilds = ((TList*)(CB1->GetChildren()))->GetEntries(); //Get number of TA2CB children (i.e. detectors)
-    for(Int_t i=0; i<nChilds; i++)
-    {
-      NaI = (TA2CalArray*)CB1->GetChildType("TA2CalArray", i);
-      if(NaI) break;
-    }
-  }
-  else if(CB2)
-  {
-    nChilds = ((TList*)(CB2->GetChildren()))->GetEntries(); //Get number of TA2CrystalBall children (i.e. detectors)
-    for(Int_t i=0; i<nChilds; i++)
-    {
-      NaI = (TA2CalArray*)CB2->GetChildType("TA2CalArray", i);
-      if(NaI) break;
-    }
-  }
-  else if(CB3)
-  {
-    nChilds = ((TList*)(CB3->GetChildren()))->GetEntries(); //Get number of TA2CentralApparatus children (i.e. detectors)
-    for(Int_t i=0; i<nChilds; i++)
-    {
-      NaI = (TA2CalArray*)CB3->GetChildType("TA2CalArray", i);
-      if(NaI) break;
-    }
-  }
-
-  //Search TA2Taps for a TA2TAPS_BaF2 instance
-  if(TAPS)
-  {
-    nChilds = ((TList*)(TAPS->GetChildren()))->GetEntries(); //Get number of TA2TAPS children (i.e. detectors)
-    for(Int_t i=0; i<nChilds; i++)
-    {
-      BaF2 = (TA2TAPS_BaF2*)TAPS->GetChildType("TA2TAPS_BaF2", i);
-      if(BaF2) break;
-    }
-  }
-
-  if(Tagger)  printf("TA2BasePhysics found TA2Tagger instance\n");
-  if(CB1)     printf("TA2BasePhysics found TA2CB instance\n");
-  if(CB2)     printf("TA2BasePhysics found TA2CrystalBall instance\n");
-  if(CB3)     printf("TA2BasePhysics found TA2CentralApparatus instance\n");
-  if(TAPS)    printf("TA2BasePhysics found TA2Taps instance\n");
-  if(NaI)  printf("TA2BasePhysics found TA2CalArray instance for NaI\n");
-  if(BaF2) printf("TA2BasePhysics found TA2TAPS_BaF2 instance for BaF2\n");
+  
 }
 
 //-----------------------------------------------------------------------------
 
 void TA2BasePhysics::Reconstruct()
 {
+  //Call default Reconstruct()
+  TA2AccessSQL::Reconstruct();
+
   nPhoton = 0;
   nProton = 0;
   nPiPlus = 0;
@@ -320,112 +235,71 @@ void TA2BasePhysics::Reconstruct()
     Event.SetL2Pattern(L2Pattern);
     
     //Pick up particles from whatever tagger class is used
-    if(Tagger)
-      for(Int_t nTagger=0; nTagger<Tagger->GetNParticle(); nTagger++)
-        Event.AddBeam(Tagger->GetParticles(nTagger));
+    if(fTagger)
+      for(Int_t nTagger=0; nTagger<fTagger->GetNParticle(); nTagger++)
+        Event.AddBeam(fTagger->GetParticles(nTagger));
       
     //Pick up particles from whatever CB class is used
-    if(CB1)
-      for(Int_t nCB=0; nCB<CB1->GetNParticle(); nCB++)
-        Event.AddParticle(CB1->GetParticles(nCB));
-    else if(CB2)
-      for(Int_t nCB=0; nCB<CB2->GetNParticle(); nCB++)
-        Event.AddParticle(CB2->GetParticles(nCB));
+    if(fCB)
+      for(Int_t nCB=0; nCB<fCB->GetNParticle(); nCB++)
+        Event.AddParticle(fCB->GetParticles(nCB));
 
     //Pick up particles from TAPS class
-    if(TAPS)
-      for(Int_t nTAPS=0; nTAPS<TAPS->GetNParticle(); nTAPS++)
-        Event.AddParticle(TAPS->GetParticles(nTAPS));
+    if(fTAPS)
+      for(Int_t nTAPS=0; nTAPS<fTAPS->GetNParticle(); nTAPS++)
+        Event.AddParticle(fTAPS->GetParticles(nTAPS));
       
     EventTree->Fill();
     Event.SetEventNumber();
   }
 
   //Collect detected photons, protons and pi+ from CB
-  if(CB1) //Collect particles in CB, if corresponding class (TA2CB) is available...
-    for(Int_t nCB=0; nCB<CB1->GetNParticle(); nCB++)
+  if(fCB) //Collect particles in CB, if corresponding class (TA2CB) is available...
+    for(Int_t nCB=0; nCB<fCB->GetNParticle(); nCB++)
     {
-      if(CB1->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
+      if(fCB->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
       {
-        Photon[nPhoton] = CB1->GetParticles(nCB);        //...copy to photon TA2Particle array
+        Photon[nPhoton] = fCB->GetParticles(nCB);        //...copy to photon TA2Particle array
         nPhoton++;
       }
-      else if(CB1->GetParticles(nCB).GetParticleID()==kProton) //If it is a proton in CB...
+      else if(fCB->GetParticles(nCB).GetParticleID()==kProton) //If it is a proton in CB...
       {
-        Proton[nProton] = CB1->GetParticles(nCB);              //...copy to proton TA2Particle array
+        Proton[nProton] = fCB->GetParticles(nCB);              //...copy to proton TA2Particle array
         nProton++;
       }
-      else if(CB1->GetParticles(nCB).GetParticleID()==kPiPlus) //If it is a proton in CB...
+      else if(fCB->GetParticles(nCB).GetParticleID()==kPiPlus) //If it is a proton in CB...
       {
-        PiPlus[nPiPlus] = CB1->GetParticles(nCB);              //...copy to proton TA2Particle array
-        nPiPlus++;
-      }
-    }
-  else if(CB2) //...otherwise collect particles in CB, if corresponding class (TA2CrystalBall) is available
-    for(Int_t nCB=0; nCB<CB2->GetNParticle(); nCB++)
-    {
-      if(CB2->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
-      {
-        Photon[nPhoton] = CB2->GetParticles(nCB);        //...copy to photon TA2Particle array
-        nPhoton++;
-      }
-      else if(CB2->GetParticles(nCB).GetParticleID()==kProton) //If it is a proton in CB...
-      {
-        Proton[nProton] = CB2->GetParticles(nCB);              //...copy to proton TA2Particle array
-        nProton++;
-      }
-      else if(CB2->GetParticles(nCB).GetParticleID()==kPiPlus) //If it is a proton in CB...
-      {
-        PiPlus[nPiPlus] = CB2->GetParticles(nCB);              //...copy to proton TA2Particle array
-        nPiPlus++;
-      }
-    }
-  else if(CB3) //...otherwise collect particles in CB, if corresponding class (TA2CentralApparatus) is available
-    for(Int_t nCB=0; nCB<CB3->GetNParticle(); nCB++)
-    {
-      if(CB3->GetParticles(nCB).GetParticleID()==kGamma) //If it is a photon in CB...
-      {
-        Photon[nPhoton] = CB3->GetParticles(nCB);        //...copy to photon TA2Particle array
-        nPhoton++;
-      }
-      else if(CB3->GetParticles(nCB).GetParticleID()==kProton) //If it is a proton in CB...
-      {
-        Proton[nProton] = CB3->GetParticles(nCB);              //...copy to proton TA2Particle array
-        nProton++;
-      }
-      else if(CB3->GetParticles(nCB).GetParticleID()==kPiPlus) //If it is a proton in CB...
-      {
-        PiPlus[nPiPlus] = CB3->GetParticles(nCB);              //...copy to proton TA2Particle array
+        PiPlus[nPiPlus] = fCB->GetParticles(nCB);              //...copy to proton TA2Particle array
         nPiPlus++;
       }
     }
 
   //Collect detected photons, protons and pi+ from TAPS
-  if(TAPS) //Collect particles in TAPS, if available
-    for(Int_t nTAPS=0; nTAPS<TAPS->GetNParticle(); nTAPS++)
+  if(fTAPS) //Collect particles in TAPS, if available
+    for(Int_t nTAPS=0; nTAPS<fTAPS->GetNParticle(); nTAPS++)
     {
-      if(TAPS->GetParticles(nTAPS).GetParticleID()==kGamma) //If it is a photon in TAPS...
+      if(fTAPS->GetParticles(nTAPS).GetParticleID()==kGamma) //If it is a photon in TAPS...
       {
-        Photon[nPhoton] = TAPS->GetParticles(nTAPS);        //...copy to photon TA2Particle array
+        Photon[nPhoton] = fTAPS->GetParticles(nTAPS);        //...copy to photon TA2Particle array
         nPhoton++;
       }
-      else if(TAPS->GetParticles(nTAPS).GetParticleID()==kProton) //If it is a proton in TAPS...
+      else if(fTAPS->GetParticles(nTAPS).GetParticleID()==kProton) //If it is a proton in TAPS...
       {
-        Proton[nProton] = TAPS->GetParticles(nTAPS);              //...copy to proton TA2Particle array
+        Proton[nProton] = fTAPS->GetParticles(nTAPS);              //...copy to proton TA2Particle array
         nProton++;
       }
-      else if(TAPS->GetParticles(nTAPS).GetParticleID()==kPiPlus) //If it is a proton in TAPS...
+      else if(fTAPS->GetParticles(nTAPS).GetParticleID()==kPiPlus) //If it is a proton in TAPS...
       {
-        PiPlus[nPiPlus] = TAPS->GetParticles(nTAPS);              //...copy to proton TA2Particle array
+        PiPlus[nPiPlus] = fTAPS->GetParticles(nTAPS);              //...copy to proton TA2Particle array
         nPiPlus++;
       }
     }
 
   //Get Tagger information (TA2Particle for each tagged beam photon)
-  if(Tagger)
+  if(fTagger)
   {
-	Tagged = Tagger->GetParticles();
-	nTagged = Tagger->GetNParticle();
+	Tagged = fTagger->GetParticles();
+	nTagged = fTagger->GetNParticle();
   }
   
 }
@@ -502,7 +376,7 @@ void TA2BasePhysics::TriggerProcessSW()
     //Loop over all 16 discriminator channels
     for(UInt_t j=0; j<16; j++)
     {
-      ENaI = NaI->GetEnergyAll(i*16 + j);            //Get energy of crystal
+      ENaI = fNaI->GetEnergyAll(i*16 + j);            //Get energy of crystal
       if(ENaI > gRandom->Gaus(ThresNaI[i*16 + j]*ScaleNaI, SigmaNaI[i*16 + j]*ScaleNaI))
         FlagDisc = true;                             //Check if crystal above threshold (block marked as hit)
       ENaI/=GainsNaI[i*16 + j];                      //Reconstruct original analogue signal ('de-calibrate')...
@@ -523,7 +397,7 @@ void TA2BasePhysics::TriggerProcessSW()
       //Loop over all channels in one block: 73 elements in case of BaF2 & PbWO4, 64 in case of BaF2 only
       for(UInt_t j=Skip; j<NewTAPS; j++)
       {  
-        EBaF2 = BaF2->GetEnergyAll(DoneBaF2 + j); //Get energy of crystal
+        EBaF2 = fBaF2PWO->GetEnergyAll(DoneBaF2 + j); //Get energy of crystal
         if(EBaF2 > gRandom->Gaus(ThresBaF2[DoneBaF2 + j], SigmaBaF2[DoneBaF2 + j]))
           FlagBlock[i] = true;                    //Check if crystal above threshold (block marked as hit)
       }

@@ -58,6 +58,7 @@ enum {
     EMP_TAPS_TIME_OFFSET,
     EMP_CB_PID_PHI_LIMIT,
     EMP_BEAM_POL_BITS,
+    EMP_CALIB_CBENERGY_PER_RUN,
 };
 
 
@@ -90,6 +91,7 @@ static const Map_t myPhysicsConfigKeys[] = {
     {"TAPS-Time-Offset:"             , EMP_TAPS_TIME_OFFSET},               // key for the TAPS time offset
     {"CB-PID-Phi-Limit:"             , EMP_CB_PID_PHI_LIMIT},               // key for the CB-PID coincidence phi limit
     {"Beam-Pol-Bits:"                , EMP_BEAM_POL_BITS},                  // key for the beam helicity bit definition
+    {"Use-CaLib-CBEnergyPerRun:"     , EMP_CALIB_CBENERGY_PER_RUN},         // key for CaLib CBEnergy per Run configuration
     // Termination
     {NULL        , -1           }
 };
@@ -124,8 +126,13 @@ private:
 
     // ------------------------------------ CaLib ------------------------------------ 
     CaLibReader_t* fCaLibReader;                            // CaLib reader
+    
+    // --------------------------- CBEnergy Correction per Run -----------------------
+    Bool_t			CBEnergyPerRunCorrection;
+	Double_t		CBEnergyPerRunCorrectionFactor;
 
     // ------------------------ Utility methods for this class ----------------------- 
+    Int_t ExtrtactRunNumber();
     void LoadDetectors(TA2DataManager* parent, Int_t depth); 
     void UpdateCorrectedScaler(Int_t sc);
     Int_t GetPatternIndex(const Char_t* patternName, TA2BitPattern* pattern);

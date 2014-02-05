@@ -25,6 +25,7 @@
 #include "TA2GenericApp.h"
 #include "TA2UserPhysics.h"
 #include "TA2MesonPhysics.h"
+#include "TA2AccessSQL.h"
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
 #include "TA2Pi0Compton.h"
@@ -49,6 +50,7 @@ enum { EA2Calorimeter,
        EA2Physics,
 		 EA2UserPhysics,
 		 EA2MesonPhysics,
+		 EA2AccessSQL,
 		 EA2BasePhysics,
 		 EA2TriggerPhysics,
 	         EA2Pi0Compton,
@@ -78,6 +80,7 @@ static const Map_t kKnownChild[] =
   {"TA2Physics",          EA2Physics},
   {"TA2UserPhysics",      EA2UserPhysics},
   {"TA2MesonPhysics",     EA2MesonPhysics},
+  {"TA2AccessSQL",		  EA2AccessSQL},
   {"TA2BasePhysics",      EA2BasePhysics},
   {"TA2TriggerPhysics",   EA2TriggerPhysics},
   {"TA2MyAnalysis",       EA2MyAnalysis},
@@ -156,6 +159,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2MesonPhysics:
     //Demonstration physics class for pi0/eta -> 2gamma
     return new TA2MesonPhysics(name, this);
+   case EA2AccessSQL:
+    //Base physics class with particle collection and trigger
+    return new TA2AccessSQL(name, this);
    case EA2BasePhysics:
     //Base physics class with particle collection and trigger
     return new TA2BasePhysics(name, this);

@@ -3,7 +3,7 @@
 
 #include "TAcquRoot.h"
 #include "TA2Analysis.h"
-#include "TA2Physics.h"
+#include "TA2AccessSQL.h"
 #include "TA2Particle.h"
 #include "TA2Tagger.h"
 #include "TA2CrystalBall.h"
@@ -20,7 +20,7 @@ class TA2Apparatus;
 
 //-----------------------------------------------------------------------------
 
-class TA2BasePhysics : public TA2Physics
+class TA2BasePhysics : public TA2AccessSQL
 {
   protected:
     //ROOT file output (carrying TA2Particles)
@@ -31,13 +31,11 @@ class TA2BasePhysics : public TA2Physics
     Char_t OutputFilename[256];
 
     //Apparati and detectors
-    TA2Tagger* Tagger;        //Tagger apparatus
-    TA2CB* CB1;               //CB apparatus (NaI, PID, MWPC; variant 1: TA2CB)
-    TA2CrystalBall* CB2;      //CB apparatus (NaI, PID, MWPC; variant 2: TA2CrystalBall)
-    TA2CentralApparatus* CB3; //CB apparatus (NaI, PID, MWPC; variant 2: TA2CentralApparatus)
-    TA2Taps* TAPS;            //TAPS apparatus (BaF2, Veto)
-    TA2CalArray* NaI;         //NaI array from CB
-    TA2TAPS_BaF2* BaF2;       //BaF2 array from TAPS
+    //TA2Tagger* Tagger;        //Tagger apparatus													//defined in AccessSQL
+    //TA2CentralApparatus* CB3; //CB apparatus (NaI, PID, MWPC; variant 2: TA2CentralApparatus)		//defined in AccessSQL
+    //TA2Taps* TAPS;            //TAPS apparatus (BaF2, Veto)										//defined in AccessSQL
+    //TA2CalArray* NaI;         //NaI array from CB													//defined in AccessSQL
+    //TA2TAPS_BaF2* BaF2;       //BaF2 array from TAPS												//defined in AccessSQL
 
     //Trigger stuff
     Bool_t DoTrigger;         //Flag whether trigger information should be used
