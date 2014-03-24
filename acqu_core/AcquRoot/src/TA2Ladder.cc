@@ -448,7 +448,12 @@ void TA2Ladder::ReadDecoded( )
   fNDoubles = 0; 
   Float_t* energy = (Float_t*)(fEvent[EI_beam]);
   Double_t Ee = ((TA2Tagger*)fParent)->GetBeamEnergy() - 1000.0*energy[3];
-  UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
+  UInt_t iHit;
+  // Prevent segfault if simulated energy is higher than the largest value defined in the config file, which means that the electron energy is lower than the lowest ladder element. BinarySearch will return (UInt_t)EBufferEnd which causes the crash by accessing fEOverlap[iHit]. Use lowest entry in this case for now. 
+  if (Ee < fECalibration[0])
+      iHit = 0;
+  else
+      iHit = TMath::BinarySearch(fNelem, fECalibration, Ee);
   //
   //  Double_t El0,Em0,Eh0,dE0, El1,Em1,Eh1,dE1, El2,Em2,Eh2,dE2;
   Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
