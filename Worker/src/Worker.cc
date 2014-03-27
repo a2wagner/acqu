@@ -118,10 +118,9 @@ int main(int argc, char **argv)
       strcpy(Config, argv[i]);
     else
     {
-      if(!strcmp("--offline", argv[i])) Offline = true;
-      if(!strcmp("-o", argv[i])) Offline = true;
-      if(!strcmp("--threads", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
-      if(!strcmp("-t", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
+      if(!strcmp("--offline", argv[i]) || !strcmp("-o", argv[i])) Offline = true;
+      if(!strcmp("--threads", argv[i]) || !strcmp("-t", argv[i])) sscanf(argv[i+1], "%d", &nThreads);
+      if(!strcmp("-c", argv[i])) sscanf(argv[i+1], "%d", &nThreads);  // added -c flag for backward compatibility
     }
 
   //check if nThreads is low enough, otherwise set it to the maximum CORES
