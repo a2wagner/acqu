@@ -59,7 +59,7 @@ Reconstruct-Analysis:
 ##
 ## Specify physics analysis
 ##			Name	Class		Config File
-Physics-Analysis:	PHYS	TA2Pi0Compton	AR-Analysis-Pi0Compton.dat
+Physics-Analysis:	PHYS	TA2GoAT		AR-Analysis-GoAT.dat
 ##
 ## Do some post initialisation...usually necessary
 Initialise:
@@ -72,7 +72,7 @@ Period:	10000	root/macros/PeriodMacro.C	PeriodMacro()
 #Period: 1000	linPolMacro.C	linPolMacro()
 ##
 ## Finish...when all input data files processed
-Finish:		root/macros/FinishTree.C	FinishTree("ARHistograms_2012.root")
+Finish: root/macros/FinishWorker.C	Finish();
 ##
 ## Histogram ALL defined single value ADC's
 #

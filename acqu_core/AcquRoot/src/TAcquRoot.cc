@@ -974,6 +974,8 @@ void TAcquRoot::Mk1EventLoop( UInt_t* startdata )
 	fIsScalerRead = ETrue;                       // flag scaler read;
 	break;
       case EReadError:				     // hardware error block
+	datum = Mk1ErrorCheck( datum );
+	break;
       case 0xffffefef:                               // garbled error block
 	datum = Mk1ErrorCheck( datum );
 	break;

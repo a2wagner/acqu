@@ -32,15 +32,15 @@ void saveAnalysis()
 	//getchar();  // wait for keyboard input
 }
 
-void FinishMacro(Char_t* file = NULL)
+void FinishMacro(Char_t* file = ARHistograms.root)
 {
 	printf("\nEnd-of-Run macro executing:\n");
-
-	if (!file)
-		file = "ARHistograms.root";
-	TFile f1(file, "RECREATE");
+	TFile f(file, "recreate");
+	if(!f) {
+		printf("Open file %s for histogram save FAILED!!\n",file);
+		return;
+	}
 	gROOT->GetList()->Write();
-	f1.Close();
-  	printf("done.\n", file);
-  	printf("All histograms saved to %s\n", file);
+	f.Close();
+  	printf("All histograms saved to %s\n\n", file);
 }

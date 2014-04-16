@@ -127,6 +127,8 @@ TA2CentralApparatus::TA2CentralApparatus( const char* name, TA2System* analysis 
   fEclNaI = NULL;
   fEhitPid = NULL;
   fEtrackMwpc = NULL;
+  fEtrackMwpc0 = NULL; 
+  fEtrackMwpc1 = NULL;
   fPsVertex[0] = fPsVertex[1] = fPsVertex[2] = fPsVertexR = NULL;
 
   // Vertexes
@@ -205,6 +207,8 @@ void TA2CentralApparatus::DeleteArrays()
   delete [] fEclNaI;
   delete [] fEhitPid;
   delete [] fEtrackMwpc;
+  delete [] fEtrackMwpc0;
+  delete [] fEtrackMwpc1;    
   for (Int_t i=0;i<3;++i) delete [] fPsVertex[i];
   delete [] fPsVertexR;
   
@@ -283,6 +287,8 @@ void TA2CentralApparatus::LoadVariable( )
   TA2DataManager::LoadVariable("EclNaI",	 fEclNaI,	EDMultiX);
   TA2DataManager::LoadVariable("EhitPid",	 fEhitPid,	EDMultiX);
   TA2DataManager::LoadVariable("EtrackMwpc",	 fEtrackMwpc,	EDMultiX);
+  TA2DataManager::LoadVariable("EtrackMwpc0",	 fEtrackMwpc0,	EDMultiX);  
+  TA2DataManager::LoadVariable("EtrackMwpc1",	 fEtrackMwpc1,	EDMultiX);  
   TA2DataManager::LoadVariable("PsVertexX",	 fPsVertex[0],	EDMultiX);
   TA2DataManager::LoadVariable("PsVertexY",	 fPsVertex[1],	EDMultiX);
   TA2DataManager::LoadVariable("PsVertexZ",	 fPsVertex[2],	EDMultiX);
@@ -445,6 +451,8 @@ void TA2CentralApparatus::PostInit()
   fEclNaI     = new Double_t[fMaxTrack+1];
   fEhitPid    = new Double_t[fMaxTrack+1];
   fEtrackMwpc = new Double_t[fMaxTrack+1];
+  fEtrackMwpc0 = new Double_t[fMaxTrack+1];
+  fEtrackMwpc1 = new Double_t[fMaxTrack+1];
   for (Int_t i=0;i<3;++i) fPsVertex[i] = new Double_t[fMaxTrack+1];
   fPsVertexR = new Double_t[fMaxTrack+1];
   
@@ -1022,9 +1030,13 @@ void TA2CentralApparatus::AddTrack(const Int_t iHitPid, const Int_t iInterMwpc0,
   // Set MWPC info
   if (track.HasMwpc())
   {
-    track.SetEtrackMwpc(CalcEtrackMwpc(iInterMwpc0,iInterMwpc1));
+    track.SetEtrackMwpc0(CalcEtrackMwpcInd(iInterMwpc0,0));	//single MWPC energy (0)
+    track.SetEtrackMwpc1(CalcEtrackMwpcInd(iInterMwpc1,1));	//single MWPC energy (1)    
+    track.SetEtrackMwpc(CalcEtrackMwpc(iInterMwpc0,iInterMwpc1)); // Sum of MWPC energies
+    
     //   track.SetTtrackMwpc(); // TODO
   }
+  
   // Set NaI info
   if (track.HasNaI())
   {
@@ -1145,6 +1157,9 @@ void TA2CentralApparatus::AddParticleInfo(const TA2CentralTrack &track)
   fParticleInfo[fNparticle].SetDetectorA( fDet[fNparticle] - fParticleInfo[fNparticle].GetDetectors() );
   fParticleInfo[fNparticle].SetTrackIntersects(track.GetIinterMwpc(0),track.GetIinterMwpc(1));
   fParticleInfo[fNparticle].SetTrackEnergy(track.GetEtrackMwpc());
+  fParticleInfo[fNparticle].SetEnergyMwpc0(track.GetEtrackMwpc0());  
+  fParticleInfo[fNparticle].SetEnergyMwpc1(track.GetEtrackMwpc1());
+  fParticleInfo[fNparticle].SetPsVertex(track.GetPsVertex()); 
   fParticleInfo[fNparticle].SetTrackTime(track.GetTtrackMwpc());
   
   ++fNparticle;

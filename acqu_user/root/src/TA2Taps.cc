@@ -7,7 +7,8 @@
 //     -- Update        H. Berghaeuser FEB 2009                           //
 //     -- Update        H. Berghaeuser July 2009                          //
 //      --Update        H.Berghaeuser Oktober2009                         //
-//      --Update        H.Berghaeuser Feb 2010                            //
+//      --Update        H.Berghaeuser Feb 2010       			  //
+//      --Update	C.Collicott	Dec 2012 	                  //
 //                                                                        //
 //     -- Use the TAPS.da !                                               //
 //                                                                        //
@@ -405,7 +406,7 @@ Int_t TA2Taps::CheckParticleID(UInt_t i)
         else return kRootino;
       }
     }
-    else return kProton; // if dEvE analysis is NOT active
+    else return kRootino; // if dEvE analysis is NOT active (changed from AUTOMATIC proton assumption C.C)
   }
 
   return kRootino;

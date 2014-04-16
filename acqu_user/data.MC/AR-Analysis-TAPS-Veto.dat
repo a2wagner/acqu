@@ -15,10 +15,11 @@ Size:   438               1       1       1
 #having given resolutions as sigma.
 #Energy resolution is relative, i.e. 0.1 corresponds to sigma = 10%, time
 #resolution is in ns.
-Energy-Resolution:  0.10  1
-Time-Resolution:    0.5   1
+#Energy-Resolution:  0.10  1
+#Time-Resolution:    0.5   1
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#
+#Global (all Veto elements) scaling parameter for energy correction
+Energy-Scale:  1.00
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Configuration of detector elements.
 #Block A
@@ -491,9 +492,6 @@ Element:  28127      0.01              20.0              100               0.005
 Element:  28128      0.01              20.0              100               0.005      28428      -200             200               1330.047852     0.050000  -51.961520   36.000000   140.700000
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#Global (all Veto elements) scaling parameter for energy correction
-Energy-Scale:  1.00
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

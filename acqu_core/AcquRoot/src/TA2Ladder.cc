@@ -11,7 +11,8 @@
 //--Rev 	JRM Annand...     17th Sep 2008...ReadDecoded & Decode doubles
 //--Rev 	JRM Annand...     26th Aug 2009...Init fMuHits NULL
 //--Rev 	JRM Annand...      1st Sep 2009...delete[], new HitD2A_t
-//--Update 	JRM Annand...     22nd Dec 2009...fDoubles MC
+//--Rev  	JRM Annand...     22nd Dec 2009...fDoubles MC
+//--Update 	JRM Annand...      5th Sep 2012...ReadDecoded check iHit sensible
 //--Description
 //                *** Acqu++ <-> Root ***
 // Online/Offline Analysis of Sub-Atomic Physics Experimental Data 
@@ -274,7 +275,7 @@ void TA2Ladder::PostInit()
 
   if( fIsOverlap ){ //make overlaps mid point between elements if not specified
     for( i=0; i<fNelem-1; i++ ){
-      if(fEOverlap[i]==0)fEOverlap[i]=0.5*(fECalibration[i]+fECalibration[i+1]);
+      if(fEOverlap[i]==0)fEOverlap[i]=(fECalibration[i+1]-fECalibration[i]);
     }
     if( fIsTime ){
       fMeanTime = new Double_t[fNelem];
@@ -448,37 +449,29 @@ void TA2Ladder::ReadDecoded( )
   fNDoubles = 0; 
   Float_t* energy = (Float_t*)(fEvent[EI_beam]);
   Double_t Ee = ((TA2Tagger*)fParent)->GetBeamEnergy() - 1000.0*energy[3];
-  UInt_t iHit;
-  // Prevent segfault if simulated energy is higher than the largest value defined in the config file, which means that the electron energy is lower than the lowest ladder element. BinarySearch will return (UInt_t)EBufferEnd which causes the crash by accessing fEOverlap[iHit]. Use lowest entry in this case for now. 
-  if (Ee < fECalibration[0])
-      iHit = 0;
-  else
-      iHit = TMath::BinarySearch(fNelem, fECalibration, Ee);
+  UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
+  if( iHit >= fNelem ) iHit = 0;
   //
   //  Double_t El0,Em0,Eh0,dE0, El1,Em1,Eh1,dE1, El2,Em2,Eh2,dE2;
   Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
-  //dE0 = fEOverlap[iHit];
-  //Eh0 = fECalibration[iHit] + 0.5*dE0;
-  Eh0 = fEOverlap[iHit];
+  dE0 = fEOverlap[iHit];
+  Eh0 = fECalibration[iHit] + 0.5*dE0;
   if( Eh0 < Ee ){
     iHit++;
-    //dE0 = fEOverlap[iHit];
-    //Eh0 = fECalibration[iHit] + 0.5*dE0;
-    Eh0 = fEOverlap[iHit];
+    dE0 = fEOverlap[iHit];
+    Eh0 = fECalibration[iHit] + 0.5*dE0;
   }
   fHits[fNhits] = fHitsPrompt[fNhits] = fHitsAll[fNhits] = iHit;
   fNhits++;
-  El0 = Eh0 - dE0;
+  El0 = Eh0;
   if( iHit < (fNelem-1) ){
-    //dE2 = fEOverlap[iHit+1];
-    //El2 = fECalibration[iHit+1] - 0.5*dE2;
-    El2 = fEOverlap[iHit];
+    dE2 = fEOverlap[iHit+1];
+    El2 = fECalibration[iHit+1] - 0.5*dE2;
   }
   else El2 = Eh0;
   if( iHit > 0 ){
-    //dE1 = fEOverlap[iHit+1];
-    //Eh1 = fECalibration[iHit+1] + 0.5*dE1;
-    Eh1 = fEOverlap[iHit+1];
+    dE1 = fEOverlap[iHit-1];
+    Eh1 = fECalibration[iHit-1] + 0.5*dE1;
   }
   else Eh1 = El0;
   if( (Ee > El2) && (Ee < Eh0) ){  

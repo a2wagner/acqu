@@ -14,6 +14,7 @@
 ##	  Name       Class Name      Setup file
 Detector: NaI        TA2CalArray     AR-Analysis-CB-NaI.dat
 Detector: PID        TA2PlasticPID   AR-Analysis-CB-PID.dat
+Detector: MWPC       TA2CylMwpc		AR-Analysis-CentApp-MWPC.dat
 ##
 ## Data reconstruction method for Crystal Ball
 Reconstruct:

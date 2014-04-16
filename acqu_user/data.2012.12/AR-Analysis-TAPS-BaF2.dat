@@ -9,7 +9,7 @@
 ##      Total   Energy? Time?   Position?
 #
 Size:  438    1       1       1
-#RawHits:
+RawHits:
 #BitPattern: data/Dec2012/TAPS/TAPS.pat
 #
 #         ADC#   low  high    ped      MeV/ch     TDC#   low     high   Off        ns/ch      Pos x        y         z (cm)

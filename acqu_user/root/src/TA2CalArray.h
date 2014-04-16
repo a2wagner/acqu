@@ -510,7 +510,8 @@ inline void TA2CalArray::ReadDecoded()
 
     if(fIsTime)
     {
-      T = Time[i] - 1.6;
+      //T = Time[i] - 1.6;
+      T = Time[i];
       if(fUseSigmaTime) T+=fRandom->Gaus(0.0, fSigmaTime);
       Lo = fElement[j]->GetTimeLowThr();
       Hi = fElement[j]->GetTimeHighThr();

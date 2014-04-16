@@ -15,6 +15,8 @@ class TA2CentralTrack : public TA2TrackLine {
     Double_t fThitPid;		// Time of the Pid hit
     Int_t    fIintersMwpc[2];	// Indexes of intersections in the internal (0) and external (1) MWPC
     Double_t fEtrackMwpc;	// Sum of MWPCs intersections pulse amplitudes
+    Double_t fEtrackMwpc0;	// MWPC 0 pulse amplitudes
+    Double_t fEtrackMwpc1;	// MWPC 1 pulse amplitudes
     Double_t fTtrackMwpc;	// To-do
     Int_t    fIclNaI;		// Index of a cluster in the NaI
     Double_t fEclNaI;		// Sum of crystals pulse amplitudes
@@ -37,6 +39,8 @@ class TA2CentralTrack : public TA2TrackLine {
     void SetIinterMwpc(const Int_t, const Int_t);
     void SetIintersMwpc(const Int_t, const Int_t);
     void SetEtrackMwpc(const Double_t &e) { fEtrackMwpc = e; }
+    void SetEtrackMwpc0(const Double_t &e) { fEtrackMwpc0 = e; }
+    void SetEtrackMwpc1(const Double_t &e) { fEtrackMwpc1 = e; }
     void SetTtrackMwpc(const Double_t &t) { fTtrackMwpc = t; }
     void SetIclNaI(const Int_t);
     void SetEclNaI(const Double_t &e) { fEclNaI = e; }
@@ -53,7 +57,9 @@ class TA2CentralTrack : public TA2TrackLine {
     Double_t GetThitPid() const { return fThitPid; }
     Int_t    GetIinterMwpc(const Int_t iCh) const { return fIintersMwpc[iCh]; }
     const Int_t *GetIintersMwpc() const { return fIintersMwpc; }
-    Double_t GetEtrackMwpc() const { return fEtrackMwpc; }
+    Double_t GetEtrackMwpc()  const { return fEtrackMwpc; }
+    Double_t GetEtrackMwpc0() const { return fEtrackMwpc0; }
+    Double_t GetEtrackMwpc1() const { return fEtrackMwpc1; }
     Double_t GetTtrackMwpc() const { return fTtrackMwpc; }
     Int_t    GetIclNaI() const { return fIclNaI; }
     Double_t GetEclNaI() const { return fEclNaI; }
@@ -89,6 +95,8 @@ inline void TA2CentralTrack::Reset()
   fIintersMwpc[0] = kNullHit;
   fIintersMwpc[1] = kNullHit;
   fEtrackMwpc = kNullFloat;
+  fEtrackMwpc0 = kNullFloat;  
+  fEtrackMwpc1 = kNullFloat;    
   fTtrackMwpc = kNullFloat;
   fIclNaI = kNullHit;
   fEclNaI = kNullFloat;

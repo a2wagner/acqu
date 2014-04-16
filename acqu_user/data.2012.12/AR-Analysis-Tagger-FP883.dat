@@ -8,7 +8,7 @@
 # Info switch is off/on = 0/1
 #       No. of elements   Energy  Time    Position
 Size:   352               0       1       1
-#Multi-hit: 3
+Multi-hit: 8
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

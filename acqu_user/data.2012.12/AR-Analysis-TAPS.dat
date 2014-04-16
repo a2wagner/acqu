@@ -5,8 +5,8 @@
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Detector systems in TAPS apparatus
-Detector: Veto          TA2TAPS_Veto		AR-Analysis-TAPS-Veto.dat
-Detector: BaF2          TA2TAPS_BaF2		AR-Analysis-TAPS-BaF2.dat
+Detector: VETO   	   TA2TAPS_Veto		AR-Analysis-TAPS-Veto.dat
+Detector: BaF2PWO          TA2TAPS_BaF2		AR-Analysis-TAPS-BaF2.dat
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

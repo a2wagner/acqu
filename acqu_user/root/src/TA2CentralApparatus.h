@@ -91,6 +91,7 @@ public:
   virtual Bool_t		 IsUsedHitPid(const Int_t i) const { return fIhitsPidUsed[i]; }
   virtual Double_t CalcEhitPid(const Int_t, const TVector3&, const TVector3&) const;
   virtual Double_t CalcEtrackMwpc(const Int_t, const Int_t) const;
+  virtual Double_t CalcEtrackMwpcInd(const Int_t, const Int_t) const; 
   
 // Tracks
 protected:
@@ -130,6 +131,8 @@ protected:
   Double_t	*fEclNaI; // [fNtracks]
   Double_t	*fEhitPid; // [fNtracks]
   Double_t	*fEtrackMwpc; // [fNtracks]
+  Double_t	*fEtrackMwpc0; // [fNtracks]  
+  Double_t	*fEtrackMwpc1; // [fNtracks]  
   //
   virtual void	MakeTracks();
   virtual void	MakeTracksTrue(const map<Double_t,Int_t>*, map<Double_t,pair<Int_t,Int_t> >&);
@@ -261,6 +264,19 @@ inline Double_t TA2CentralApparatus::CalcEtrackMwpc(const Int_t iInterMwpc0, con
 }
 
 //_______________________________________________________________________________
+inline Double_t TA2CentralApparatus::CalcEtrackMwpcInd(const Int_t iInterMwpc, const Int_t MWPC) const
+{
+  // Returns single MWPC track energy
+  
+  if (iInterMwpc == kNullHit) return kNullFloat;
+  
+  Double_t e = 0.;
+  if (iInterMwpc != kNullHit) e  = fMwpc->GetInters(MWPC,iInterMwpc)->GetAclIE();
+  
+  return e;
+}
+
+//_______________________________________________________________________________
 inline void TA2CentralApparatus::MarkEndBuffers()
 {
   // EndBuffers
@@ -279,6 +295,8 @@ inline void TA2CentralApparatus::MarkEndBuffers()
   fEclNaI[fNtracks]     = EBufferEnd;
   fEhitPid[fNtracks]    = EBufferEnd;
   fEtrackMwpc[fNtracks] = EBufferEnd;
+  fEtrackMwpc0[fNtracks] = EBufferEnd;
+  fEtrackMwpc1[fNtracks] = EBufferEnd;
   for (Int_t i=0; i<3; ++i)
   {
     fPsVertex[i][fNtracks] = EBufferEnd;

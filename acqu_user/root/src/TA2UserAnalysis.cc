@@ -26,6 +26,7 @@
 #include "TA2UserPhysics.h"
 #include "TA2MesonPhysics.h"
 #include "TA2AccessSQL.h"
+#include "TA2GoAT.h"
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
 #include "TA2Pi0Compton.h"
@@ -33,36 +34,42 @@
 #include "TA2MyCrystalBall.h"
 #include "TA2MyTAPS.h"
 #include "TA2GenericApp.h"
+#include "TA2BeamPolMon.h"
 #include "TA2MyCalibration.h"
 #include "TA2MyCaLib.h"
 #include "TA2MyClusterCalib.h"
 #include "TA2MyRateEstimation.h"
+#include "TA2TAPSAnalysis.h"
 
 // Recognised apparatus classes.
 // The "standard" set is held in TA2Analysis
-enum { EA2Calorimeter,
-       EA2Tagger,
-		 EA2CosmicCal,
-       EA2CrystalBall,
-		 EA2CB,
-		 EA2Taps,
-       EA2CentralApparatus,
-		 EA2GenericApp,
-       EA2Physics,
-		 EA2UserPhysics,
-		 EA2MesonPhysics,
-		 EA2AccessSQL,
-		 EA2BasePhysics,
-		 EA2TriggerPhysics,
-	         EA2Pi0Compton,
-		 EA2SaschaPhysics,
-       EA2MyCrystalBall, 
-       EA2MyTAPS,
-       EA2MyAnalysis, 
-       EA2MyCalibration, 
-       EA2MyCaLib, 
-       EA2MyClusterCalib, 
-       EA2MyRateEstimation,  };
+enum { 
+  EA2Calorimeter,
+  EA2Tagger,
+  EA2CosmicCal,
+  EA2CrystalBall,
+  EA2CB,
+  EA2Taps,
+  EA2CentralApparatus,
+  EA2GenericApp,
+  EA2BeamPolMon,
+  EA2Physics,
+  EA2UserPhysics,
+  EA2MesonPhysics,
+  EA2AccessSQL,
+  EA2GoAT,
+  EA2BasePhysics,
+  EA2TriggerPhysics,
+  EA2Pi0Compton,
+  EA2SaschaPhysics,
+  EA2MyCrystalBall, 
+  EA2MyTAPS,
+  EA2MyAnalysis, 
+  EA2MyCalibration, 
+  EA2MyCaLib, 
+  EA2MyClusterCalib, 
+  EA2MyRateEstimation,
+  EA2TAPSAnalysis };
 
 static const Map_t kKnownChild[] =
 {
@@ -75,6 +82,7 @@ static const Map_t kKnownChild[] =
   {"TA2Taps",             EA2Taps},
   {"TA2CentralApparatus", EA2CentralApparatus},
   {"TA2GenericApp",       EA2GenericApp},  
+  {"TA2BeamPolMon",       EA2BeamPolMon},  
   {"TA2MyCrystalBall",    EA2MyCrystalBall},
   {"TA2MyTAPS",           EA2MyTAPS},
   //Physics
@@ -83,6 +91,7 @@ static const Map_t kKnownChild[] =
   {"TA2UserPhysics",      EA2UserPhysics},
   {"TA2MesonPhysics",     EA2MesonPhysics},
   {"TA2AccessSQL",		  EA2AccessSQL},
+  {"TA2GoAT",			  EA2GoAT},
   {"TA2BasePhysics",      EA2BasePhysics},
   {"TA2TriggerPhysics",   EA2TriggerPhysics},
   {"TA2SaschaPhysics",    EA2SaschaPhysics},
@@ -91,6 +100,7 @@ static const Map_t kKnownChild[] =
   {"TA2MyCaLib",          EA2MyCaLib},
   {"TA2MyClusterCalib",   EA2MyClusterCalib},
   {"TA2MyRateEstimation", EA2MyRateEstimation},
+  {"TA2TAPSAnalysis",     EA2TAPSAnalysis},
   {NULL,                  -1}
 };
 
@@ -142,7 +152,10 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2GenericApp:
     //Generic
     return new TA2GenericApp(name, this);
-   case EA2MyCrystalBall:
+  case EA2BeamPolMon:
+    // BeamPolMon
+    return new TA2BeamPolMon(name, this);
+  case EA2MyCrystalBall:
     // My Moded CB stuff
     return new TA2MyCrystalBall( name, this );
   case EA2MyTAPS:
@@ -165,6 +178,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2AccessSQL:
     //Base physics class with particle collection and trigger
     return new TA2AccessSQL(name, this);
+   case EA2GoAT:
+    //Base physics class with particle collection and trigger
+    return new TA2GoAT(name, this);
    case EA2BasePhysics:
     //Base physics class with particle collection and trigger
     return new TA2BasePhysics(name, this);
@@ -186,6 +202,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
   case EA2MyRateEstimation:
     // rate estimation
     return new TA2MyRateEstimation( name, this );
+  case EA2TAPSAnalysis:
+    // TAPS analysis
+    return new TA2TAPSAnalysis( name, this );
 
    default:
     PrintError((char*)name, "<Unknown apparatus..cannot continue>", EErrFatal);

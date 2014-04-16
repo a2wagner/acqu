@@ -17,13 +17,12 @@
 ##	  Name       Class Name		Setup file
 Detector: NaI        TA2CalArray	AR-Analysis-CentApp-NaI.dat
 Detector: PID        TA2PlasticPID	AR-Analysis-CentApp-PID.dat
-Detector: CylMWPC    TA2CylMwpc		AR-Analysis-CentApp-MWPC.dat
+Detector: MWPC       TA2CylMwpc		AR-Analysis-CentApp-MWPC.dat
 #
 ## Data reconstruction method for Crystal Ball 
 Reconstruct:
 ##
 ## PDG database	# particles
-###ParticleID: 	16
 ParticleID: 	64
 ##
 ## Use best MWPC tracks

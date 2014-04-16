@@ -52,9 +52,11 @@ TA2AccessSQL::TA2AccessSQL(const char* name, TA2Analysis* analysis)	: TA2Physics
     fCB			= 0;   						// pointer to the Crystal Ball
     fNaI		= 0;       					// pointer to the NaI elements
 	fPID		= 0;           				// pointer to the PID
+	fMWPC 		= 0;						// pointer to the MWPC
     fTAPS		= 0;       					// pointer to TAPS
     fBaF2PWO	= 0;	       				// pointer to the BaF2 (or the BaF2/PWO) array
     fVeto		= 0;           				// pointer to the TAPS Vetos
+
 }
 
 
@@ -307,42 +309,48 @@ void TA2AccessSQL::LoadDetectors(TA2DataManager* parent, Int_t depth)
         TObject* obj = lnk->GetObject();
      
         // look for detectors
-        if (!strcmp(obj->GetName(), "TAGG"))
+        if (!strcmp(obj->ClassName(), "TA2Tagger"))
         {
             fTagger = (TA2Tagger*) obj;
             added = kTRUE;
         }
-        if (!strcmp(obj->GetName(), "FPD"))
+        if (!strcmp(obj->ClassName(), "TA2Ladder"))
         {
             fLadder = (TA2Ladder*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "CB"))
+        else if (!strcmp(obj->ClassName(), "TA2CentralApparatus"))
         {
             fCB = (TA2CentralApparatus*) obj;
+//			fCB = (TA2CrystalBall*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "NaI"))
+        else if (!strcmp(obj->ClassName(), "TA2CalArray"))
         {
             fNaI = (TA2CalArray*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "PID"))
+        else if (!strcmp(obj->ClassName(), "TA2PlasticPID"))
         {
             fPID = (TA2PlasticPID*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "TAPS"))
+        else if (!strcmp(obj->ClassName(), "TA2CylMwpc"))
+        {
+            fMWPC = (TA2CylMwpc*) obj;
+            added = kTRUE;
+        }   
+        else if (!strcmp(obj->ClassName(), "TA2Taps"))
         {
             fTAPS = (TA2Taps*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "BaF2PWO"))
+        else if (!strcmp(obj->ClassName(), "TA2TAPS_BaF2"))
         {
             fBaF2PWO = (TA2TAPS_BaF2*) obj;
             added = kTRUE;
         }
-        else if (!strcmp(obj->GetName(), "VETO"))
+        else if (!strcmp(obj->ClassName(), "TA2TAPS_Veto"))
         {
             fVeto = (TA2TAPS_Veto*) obj;
             added = kTRUE;
@@ -413,7 +421,7 @@ void TA2AccessSQL::PostInit()
 	TA2Physics::PostInit();
 	
 	LoadDetectors(fParent, 0);
-	printf("gain at begin:			%lf\n", fNaI->GetElement(10)->GetA1());
+	if(fNaI) printf("gain at begin:			%lf\n", fNaI->GetElement(10)->GetA1());
 	
 	if(fCaLibReader)
 	{
@@ -421,19 +429,22 @@ void TA2AccessSQL::PostInit()
         	fCaLibReader->Deconnect();
 	}
 	
-	if(CBEnergyPerRunCorrection)
+	if(fNaI)
 	{
-		for(int i=0; i<fNaI->GetNelement(); i++)
-			fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
-	}
-	printf("gain after calib:		%lf\n", fNaI->GetElement(10)->GetA1());
+		if(CBEnergyPerRunCorrection)
+		{
+			for(int i=0; i<fNaI->GetNelement(); i++)
+				fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
+		}
+		printf("gain after calib:		%lf\n", fNaI->GetElement(10)->GetA1());
 	
-	if(CBEnergyPerRunCorrection)
-	{
-		for(int i=0; i<fNaI->GetNelement(); i++)
-			fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
+		if(CBEnergyPerRunCorrection)
+		{
+			for(int i=0; i<fNaI->GetNelement(); i++)
+				fNaI->GetElement(i)->SetA1(CBEnergyPerRunCorrectionFactor * (fNaI->GetElement(i)->GetA1()));
+		}
+		printf("gain after correction:	%lf\n", fNaI->GetElement(10)->GetA1());
 	}
-	printf("gain after correction:	%lf\n", fNaI->GetElement(10)->GetA1());
 }
 
 void TA2AccessSQL::LoadVariable()

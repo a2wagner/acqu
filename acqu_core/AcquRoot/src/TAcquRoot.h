@@ -466,7 +466,9 @@ inline UInt_t* TAcquRoot::Mk1ErrorCheck( UInt_t* datum )
   ReadError_t* rerror = (ReadError_t*)datum;  // Hardware error block struct
   ReadErrorMk2_t* sterror = fHardwareError + fHardError;  // stored err block
   sterror->fHeader = sterror->fTrailer = EReadError;
-  sterror->fModIndex = rerror->fCrate;
+  sterror->fModIndex = rerror->fBus;
+  sterror->fModID = rerror->fCrate;
+  sterror->fErrCode = rerror->fCode;
   fHardError++;			              // register error
   rerror++;                                   // advance past error block
   return (UInt_t*)rerror;
