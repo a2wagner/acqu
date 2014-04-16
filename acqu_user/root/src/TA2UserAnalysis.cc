@@ -29,6 +29,7 @@
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
 #include "TA2Pi0Compton.h"
+#include "TA2SaschaPhysics.h"
 #include "TA2MyCrystalBall.h"
 #include "TA2MyTAPS.h"
 #include "TA2GenericApp.h"
@@ -54,6 +55,7 @@ enum { EA2Calorimeter,
 		 EA2BasePhysics,
 		 EA2TriggerPhysics,
 	         EA2Pi0Compton,
+		 EA2SaschaPhysics,
        EA2MyCrystalBall, 
        EA2MyTAPS,
        EA2MyAnalysis, 
@@ -83,6 +85,7 @@ static const Map_t kKnownChild[] =
   {"TA2AccessSQL",		  EA2AccessSQL},
   {"TA2BasePhysics",      EA2BasePhysics},
   {"TA2TriggerPhysics",   EA2TriggerPhysics},
+  {"TA2SaschaPhysics",    EA2SaschaPhysics},
   {"TA2MyAnalysis",       EA2MyAnalysis},
   {"TA2MyCalibration",    EA2MyCalibration},
   {"TA2MyCaLib",          EA2MyCaLib},
@@ -168,6 +171,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2TriggerPhysics:
     //Trigger threshold physics class
     return new TA2TriggerPhysics(name, this);
+   case EA2SaschaPhysics:
+    // My physics class
+    return new TA2SaschaPhysics(name, this);
    case EA2MyCalibration:
     // calibration
     return new TA2MyCalibration( name, this );

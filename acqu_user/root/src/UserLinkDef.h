@@ -32,6 +32,7 @@
 #pragma link C++ class TA2AccessSQL+;
 #pragma link C++ class TA2BasePhysics+;
 #pragma link C++ class TA2TriggerPhysics+;
+#pragma link C++ class TA2SaschaPhysics+;
 // TA2My... extension classes
 //#pragma link C++ class TA2MyAnalysis+;
 #pragma link C++ class TA2MyCalibration+;
