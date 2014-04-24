@@ -34,6 +34,7 @@ TA2BasePhysics::TA2BasePhysics(const char* Name, TA2Analysis* Analysis) : TA2Acc
   //Initialize trigger variables
   DoTrigger = false;
   SimulateTrigger = false;
+  trigger = false;
   UseSumModel = false;
 
   ESumThres = 0.0;
@@ -190,8 +191,6 @@ void TA2BasePhysics::PostInit()
 {
   //Call default PostInit()
   TA2AccessSQL::PostInit();
-
-  Int_t nChilds;
   
   //'Permutations:' line in configuration file gives maximum number of particles to be processed
   nBeam = fNpermutation[0]; //Tagger
@@ -203,7 +202,6 @@ void TA2BasePhysics::PostInit()
   Photon = new TA2Particle[nPart]; //TA2Particle carrying photon informations
   Proton = new TA2Particle[nPart]; //TA2Particle carrying proton informations
   PiPlus = new TA2Particle[nPart]; //TA2Particle carrying pi+ informations
-  
 }
 
 //-----------------------------------------------------------------------------
@@ -225,7 +223,8 @@ void TA2BasePhysics::Reconstruct()
   //Evaluate trigger
   TriggerProcessHW();          //Collect hardware trigger information (if available)
   TriggerProcessSW();          //Test trigger conditions in software (if requested)
-  if(!TriggerDecode()) return; //If trigger not fulfilled, go to next event
+  trigger = TriggerDecode();
+  if(!trigger) return;  //If trigger not fulfilled, go to next event
 
   //Write all TA2Particles to ROOT file
   if(bDoROOT)
