@@ -189,9 +189,6 @@ void TA2BasePhysics::LoadVariable()
 
 void TA2BasePhysics::PostInit()
 {
-  //Call default PostInit()
-  TA2AccessSQL::PostInit();
-  
   //'Permutations:' line in configuration file gives maximum number of particles to be processed
   nBeam = fNpermutation[0]; //Tagger
   nBall = fNpermutation[1]; //Crystal Ball
@@ -202,6 +199,9 @@ void TA2BasePhysics::PostInit()
   Photon = new TA2Particle[nPart]; //TA2Particle carrying photon informations
   Proton = new TA2Particle[nPart]; //TA2Particle carrying proton informations
   PiPlus = new TA2Particle[nPart]; //TA2Particle carrying pi+ informations
+
+  //Call default PostInit()
+  TA2AccessSQL::PostInit();
 }
 
 //-----------------------------------------------------------------------------

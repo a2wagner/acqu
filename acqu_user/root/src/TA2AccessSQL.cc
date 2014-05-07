@@ -418,8 +418,6 @@ void TA2AccessSQL::ApplyCaLib()
 
 void TA2AccessSQL::PostInit()
 {
-	TA2Physics::PostInit();
-	
 	LoadDetectors(fParent, 0);
 	if(fNaI) printf("gain at begin:			%lf\n", fNaI->GetElement(10)->GetA1());
 	
@@ -445,6 +443,8 @@ void TA2AccessSQL::PostInit()
 		}
 		printf("gain after correction:	%lf\n", fNaI->GetElement(10)->GetA1());
 	}
+    
+	TA2Physics::PostInit();
 }
 
 void TA2AccessSQL::LoadVariable()
