@@ -27,6 +27,7 @@
 
 // Physics classes
 #pragma link C++ class TA2Pi0Compton+;
+#pragma link C++ class TA2SaschaPhysics+;
 #pragma link C++ class TA2UserPhysics+;
 #pragma link C++ class TA2MesonPhysics+;
 #pragma link C++ class TA2AccessSQL+;
@@ -34,7 +35,6 @@
 #pragma link C++ class TA2BasePhysics+;
 #pragma link C++ class TA2TriggerPhysics+;
 #pragma link C++ class TA2TAPSAnalysis+;
-#pragma link C++ class TA2SaschaPhysics+;
 // TA2My... extension classes
 //#pragma link C++ class TA2MyAnalysis+;
 #pragma link C++ class TA2MyCalibration+;

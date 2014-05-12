@@ -87,6 +87,7 @@ static const Map_t kKnownChild[] =
   {"TA2MyTAPS",           EA2MyTAPS},
   //Physics
   {"TA2Pi0Compton",       EA2Pi0Compton},
+  {"TA2SaschaPhysics",    EA2SaschaPhysics},
   {"TA2Physics",          EA2Physics},
   {"TA2UserPhysics",      EA2UserPhysics},
   {"TA2MesonPhysics",     EA2MesonPhysics},
@@ -94,7 +95,6 @@ static const Map_t kKnownChild[] =
   {"TA2GoAT",			  EA2GoAT},
   {"TA2BasePhysics",      EA2BasePhysics},
   {"TA2TriggerPhysics",   EA2TriggerPhysics},
-  {"TA2SaschaPhysics",    EA2SaschaPhysics},
   {"TA2MyAnalysis",       EA2MyAnalysis},
   {"TA2MyCalibration",    EA2MyCalibration},
   {"TA2MyCaLib",          EA2MyCaLib},
@@ -166,6 +166,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2Pi0Compton:
     // Dave's Physics class
     return new TA2Pi0Compton( name, this );
+   case EA2SaschaPhysics:
+    // My physics class
+    return new TA2SaschaPhysics(name, this);
    case EA2Physics:
     //Default (dummy physics)
     return new TA2Physics(name, this);
@@ -187,9 +190,6 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2TriggerPhysics:
     //Trigger threshold physics class
     return new TA2TriggerPhysics(name, this);
-   case EA2SaschaPhysics:
-    // My physics class
-    return new TA2SaschaPhysics(name, this);
    case EA2MyCalibration:
     // calibration
     return new TA2MyCalibration( name, this );
