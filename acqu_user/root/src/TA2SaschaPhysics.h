@@ -76,7 +76,7 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	UInt_t* n_cuts[unknown];  // unknown is the last entry in the cut enum, thus the number of cuts
 
 	// The polygon cut which will be applied to the energy and momentum balance
-	TCutG cutBalance;
+	TCutG* cutBalance;
 
 	// bools to indicate if the current event passed the cuts
 	bool passedProtonEnergy;
@@ -163,16 +163,6 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	Double_t coplanarity, protEnergyReconstr;
 
 	Double_t* invM_cuts[unknown][N_WINDOWS];
-//	Double_t* invM_protE[N_WINDOWS];
-//	Double_t* invM_copl[N_WINDOWS];
-//	Double_t* invM_balance[N_WINDOWS];
-//	Double_t* invM_dAlphaProtTAPS[N_WINDOWS];
-//	Double_t* invM_missM[N_WINDOWS];
-//	Double_t* invM_copl_balance[N_WINDOWS];
-//	Double_t* invM_balance_missM[N_WINDOWS];
-//	Double_t* invM_copl_missM[N_WINDOWS];
-//	Double_t* invM_balance_dAlpha[N_WINDOWS];
-//	Double_t* invM_allCuts[N_WINDOWS];
 	Double_t* balancePx[N_WINDOWS];
 	Double_t* balancePy[N_WINDOWS];
 	Double_t* balancePz[N_WINDOWS];

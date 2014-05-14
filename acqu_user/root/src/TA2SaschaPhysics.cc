@@ -381,7 +381,8 @@ void TA2SaschaPhysics::PostInit()
 		printf("Error opening the file containing the cuts!\n");
 		exit(1);
 	}
-	//TODO: seems to lead to a crash when not used as TCutG balance = ... ?
+	cutBalance = (TCutG*)cutFile.Get("balanceCut");
+	// using cutBalance not as a pointer seems to no longer work, will lead to a crash when not used as TCutG balance = ... ?
 	//cutBalance = *(TCutG*)cutFile.Get("balanceCut");
 	cutFile.Close();
 
@@ -466,7 +467,7 @@ void TA2SaschaPhysics::Reconstruct()
 	bool hasProton = false;
 	TA2Particle photons[maxParticles];
 	//if (nParticles == 3)
-	for (int i = 0; i < nParticles; i++) {
+	for (unsigned int i = 0; i < nParticles; i++) {
 		if (particles[i].GetParticleID() == kGamma)
 			photons[nPhoton++] = particles[i];
 		else if (particles[i].GetParticleID() == kProton && !hasProton)
@@ -617,7 +618,7 @@ bool TA2SaschaPhysics::ApplyCuts()
 		timeProton = particles[nParticlesCB].GetTime();
 
 		nCharged = 0;
-		for (int i = 0; i < N_FINAL_STATE; i++) {
+		for (unsigned int i = 0; i < N_FINAL_STATE; i++) {
 			if (particles[i].HasDetector(EDetPID)) {
 				chargedPart[nCharged++] = particles[i].GetP4();
 				if (nCharged <= 2)
@@ -637,7 +638,7 @@ bool TA2SaschaPhysics::ApplyCuts()
 		passedInvMass = true;//invM_2charged > 900. && invM_2charged < 1000. ? true : false;
 
 		/* At this point we have two charged and one neutral particle in the CB as well as one particle in TAPS, probably the proton. Start to examine all tagged photons for prompt and random windows. */
-		for (int i = 0; i < nBeamPhotons; i++) {
+		for (unsigned int i = 0; i < nBeamPhotons; i++) {
 			timeTagger[i] = Tagged[i].GetTime();
 			// for testing, as EDMultiX doesn't do anything...
 			taggerTime->Fill(Tagged[i].GetTime());
@@ -651,7 +652,7 @@ bool TA2SaschaPhysics::ApplyCuts()
 			/* now "apply" the kinematic cuts */
 			passedProtonEnergy = protEexpect < 350. ? true : false;
 			passedCoplanarity = coplanarity > 160. && coplanarity < 200 ? true : false;
-			passedBalance = true;//cutBalance.IsInside(balanceP4.E(), balanceP4.Pz()) ? true : false;
+			passedBalance = cutBalance->IsInside(balanceP4.E(), balanceP4.Pz()) ? true : false;
 			passedDAlphaProtTAPS = dAlphaProtTAPS < 6. ? true : false;
 			passedMissMass = true;//mMiss > 900. && mMiss < 980. ? true : false;
 			if (passedProtonEnergy && passedCoplanarity && passedBalance && passedDAlphaProtTAPS && passedMissMass && passedInvMass)
@@ -826,7 +827,7 @@ int TA2SaschaPhysics::GetPermutations(Int_t perm[][N_FINAL_STATE])
 	//std::cout << "Pointer:   " << &perm[0] << std::endl;
 	if (nParticlesCB < 3) return 1;
 
-	int n = 0, i = 0, j = 1, k = 2;
+	unsigned int n = 0, i = 0, j = 1, k = 2;
 
 	while (i < j && i <= nParticlesCB-3) {
 		while (j < k && j <= nParticlesCB-2) {

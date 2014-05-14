@@ -27,6 +27,26 @@ Stream-Spec:    File    Mk1     0       32768   32      0       400
 ## Now the list of data files to analyse
 ##              File Name       1st rec Last rec
 ##
-File-Name:      CB_42000.dat    0       1000
+File-Name:      CB_42000.dat    0       0
+File-Name:      CB_42001.dat    0       0
+File-Name:      CB_42002.dat    0       0
+File-Name:      CB_42003.dat    0       0
+File-Name:      CB_42004.dat    0       0
+File-Name:      CB_42005.dat    0       0
+File-Name:      CB_42006.dat    0       0
+File-Name:      CB_42007.dat    0       0
+File-Name:      CB_42008.dat    0       0
+File-Name:      CB_42009.dat    0       0
+#
+File-Name:      CB_42010.dat    0       0
+File-Name:      CB_42011.dat    0       0
+File-Name:      CB_42012.dat    0       0
+File-Name:      CB_42013.dat    0       0
+File-Name:      CB_42014.dat    0       0
+File-Name:      CB_42015.dat    0       0
+File-Name:      CB_42016.dat    0       0
+File-Name:      CB_42017.dat    0       0
+File-Name:      CB_42018.dat    0       0
+File-Name:      CB_42019.dat    0       0
 ## END
 
