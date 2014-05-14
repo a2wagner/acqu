@@ -27,6 +27,27 @@ class TA2Apparatus;
 class TA2SaschaPhysics : public TA2BasePhysics
 {
   protected:
+	// enum for numbering of different cuts and cut combinations
+	enum cuts {
+		protE,
+		copl,
+		balance,
+		dAlpha,
+		missM,
+		invM,
+		copl_balance,
+		balance_missM,
+		protE_copl,
+		copl_missM,
+		missM_invM,
+		balance_dAlpha,
+		copl_dAlpha,
+		protE_copl_balance,
+		copl_balance_dAlpha,
+		all,
+		unknown
+	};
+
 	// Apparati for the different used detectors
 	TA2Tagger* fTAG;  // Tagger
 	TA2CentralApparatus* fCB;  // Crystal Ball
@@ -52,16 +73,7 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	// Counters to terminate arrays according to the entries correctly
 	UInt_t nPrompt, nRandom;
 	// ... and for the different cut combinations
-	UInt_t n_protE[N_WINDOWS];
-	UInt_t n_copl[N_WINDOWS];
-	UInt_t n_balance[N_WINDOWS];
-	UInt_t n_dAlphaProtTAPS[N_WINDOWS];
-	UInt_t n_missM[N_WINDOWS];
-	UInt_t n_copl_balance[N_WINDOWS];
-	UInt_t n_balance_missM[N_WINDOWS];
-	UInt_t n_copl_missM[N_WINDOWS];
-	UInt_t n_balance_dAlpha[N_WINDOWS];
-	UInt_t n_allCuts[N_WINDOWS];
+	UInt_t* n_cuts[unknown];  // unknown is the last entry in the cut enum, thus the number of cuts
 
 	// The polygon cut which will be applied to the energy and momentum balance
 	TCutG cutBalance;
@@ -150,21 +162,22 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	Double_t* dTimeFS;
 	Double_t coplanarity, protEnergyReconstr;
 
-	Double_t* invM_protE[N_WINDOWS];
-	Double_t* invM_copl[N_WINDOWS];
-	Double_t* invM_balance[N_WINDOWS];
-	Double_t* invM_dAlphaProtTAPS[N_WINDOWS];
-	Double_t* invM_missM[N_WINDOWS];
-	Double_t* invM_copl_balance[N_WINDOWS];
-	Double_t* invM_balance_missM[N_WINDOWS];
-	Double_t* invM_copl_missM[N_WINDOWS];
-	Double_t* invM_balance_dAlpha[N_WINDOWS];
-	Double_t* invM_allCuts[N_WINDOWS];
+	Double_t* invM_cuts[unknown][N_WINDOWS];
+//	Double_t* invM_protE[N_WINDOWS];
+//	Double_t* invM_copl[N_WINDOWS];
+//	Double_t* invM_balance[N_WINDOWS];
+//	Double_t* invM_dAlphaProtTAPS[N_WINDOWS];
+//	Double_t* invM_missM[N_WINDOWS];
+//	Double_t* invM_copl_balance[N_WINDOWS];
+//	Double_t* invM_balance_missM[N_WINDOWS];
+//	Double_t* invM_copl_missM[N_WINDOWS];
+//	Double_t* invM_balance_dAlpha[N_WINDOWS];
+//	Double_t* invM_allCuts[N_WINDOWS];
 	Double_t* balancePx[N_WINDOWS];
 	Double_t* balancePy[N_WINDOWS];
 	Double_t* balancePz[N_WINDOWS];
 	Double_t* balanceE[N_WINDOWS];
-	Double_t* missM[N_WINDOWS];
+	Double_t* missMass[N_WINDOWS];
 	Double_t* protonEnergyExpect[N_WINDOWS];
 	Double_t* protDAlphaTAPSCl[N_WINDOWS];
 

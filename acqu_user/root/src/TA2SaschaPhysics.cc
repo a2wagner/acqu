@@ -28,31 +28,7 @@ TA2SaschaPhysics::TA2SaschaPhysics(const char* Name, TA2Analysis* Analysis) : TA
 	random1High = -10;
 	random2Low = 6;
 	random2High = 36;
-/* doesn't make any difference when initialised with NULL
-	timeLeptons = NULL;
-	timeTagger = NULL;
-	dTimeFS = NULL;
 
-	for (int i = 0; i < N_WINDOWS; i++) {
-		invM_protE[i] = NULL;
-		invM_copl[i] = NULL;
-		invM_balance[i] = NULL;
-		invM_dAlphaProtTAPS[i] = NULL;
-		invM_missM[i] = NULL;
-		invM_copl_balance[i] = NULL;
-		invM_balance_missM[i] = NULL;
-		invM_copl_missM[i] = NULL;
-		invM_balance_dAlpha[i] = NULL;
-		invM_allCuts[i] = NULL;
-		balancePx[i] = NULL;
-		balancePy[i] = NULL;
-		balancePz[i] = NULL;
-		balanceE[i] = NULL;
-		missM[i] = NULL;
-		protonEnergyExpect[i] = NULL;
-		protDAlphaTAPSCl[i] = NULL;
-	}
-*/
 	AddCmdList(kPhysics);  // enables keyword recognition in SetConfig
 }
 
@@ -109,7 +85,30 @@ TA2SaschaPhysics::~TA2SaschaPhysics()
 	delete[] timeTagger;
 	delete[] dTimeFS;
 
-    delete[] particles;
+	for (unsigned int i = 0; i < N_WINDOWS; i++) {
+		for (unsigned int j = 0; j < unknown; j++) {
+			delete[] invM_cuts[j][i];
+			delete[] invM_cuts[j];
+			delete[] n_cuts[j];
+		}
+		delete[] balancePx[i];
+		delete[] balancePy[i];
+		delete[] balancePz[i];
+		delete[] balanceE[i];
+		delete[] missMass[i];
+		delete[] protonEnergyExpect[i];
+		delete[] protDAlphaTAPSCl[i];
+	}
+	delete[] invM_cuts;
+	delete[] balancePx;
+	delete[] balancePy;
+	delete[] balancePz;
+	delete[] balanceE;
+	delete[] missMass;
+	delete[] protonEnergyExpect;
+	delete[] protDAlphaTAPSCl;
+
+	delete[] particles;
 }
 
 //---------------------------------------------------------------------------
@@ -220,39 +219,39 @@ void TA2SaschaPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("invMass6CB1TAPS", &invMass6CB1TAPS, EDSingleX);
 
 	// Prompt
-	TA2DataManager::LoadVariable("invM_protE_prompt", invM_protE[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_prompt", invM_copl[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_prompt", invM_balance[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_prompt", invM_dAlphaProtTAPS[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_missM_prompt", invM_missM[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_balance_prompt", invM_copl_balance[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_missM_prompt", invM_balance_missM[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_missM_prompt", invM_copl_missM[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_dAlpha_prompt", invM_balance_dAlpha[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("invM_allCuts_prompt", invM_allCuts[PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_protE_prompt", invM_cuts[protE][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_prompt", invM_cuts[copl][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_prompt", invM_cuts[balance][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_prompt", invM_cuts[dAlpha][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_missM_prompt", invM_cuts[missM][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_balance_prompt", invM_cuts[copl_balance][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_missM_prompt", invM_cuts[balance_missM][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_missM_prompt", invM_cuts[copl_missM][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_dAlpha_prompt", invM_cuts[balance_dAlpha][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("invM_allCuts_prompt", invM_cuts[all][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balancePx_prompt", balancePx[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balancePy_prompt", balancePy[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balancePz_prompt", balancePz[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balanceE_prompt", balanceE[PROMPT], EDMultiX);
-	TA2DataManager::LoadVariable("missM_prompt", missM[PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_prompt", missMass[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("protonEnergyExpect_prompt", protonEnergyExpect[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("protDAlphaTAPSCl_prompt", protDAlphaTAPSCl[PROMPT], EDMultiX);
 	// Random
-	TA2DataManager::LoadVariable("invM_protE_random", invM_protE[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_random", invM_copl[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_random", invM_balance[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_random", invM_dAlphaProtTAPS[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_missM_random", invM_missM[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_balance_random", invM_copl_balance[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_missM_random", invM_balance_missM[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_copl_missM_random", invM_copl_missM[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_balance_dAlpha_random", invM_balance_dAlpha[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("invM_allCuts_random", invM_allCuts[RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_protE_random", invM_cuts[protE][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_random", invM_cuts[copl][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_random", invM_cuts[balance][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_random", invM_cuts[dAlpha][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_missM_random", invM_cuts[missM][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_balance_random", invM_cuts[copl_balance][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_missM_random", invM_cuts[balance_missM][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_copl_missM_random", invM_cuts[copl_missM][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_balance_dAlpha_random", invM_cuts[balance_dAlpha][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("invM_allCuts_random", invM_cuts[all][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balancePx_random", balancePx[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balancePy_random", balancePy[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balancePz_random", balancePz[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balanceE_random", balanceE[RANDOM], EDMultiX);
-	TA2DataManager::LoadVariable("missM_random", missM[RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_random", missMass[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("protonEnergyExpect_random", protonEnergyExpect[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("protDAlphaTAPSCl_random", protDAlphaTAPSCl[RANDOM], EDMultiX);
 }
@@ -355,28 +354,22 @@ void TA2SaschaPhysics::PostInit()
 	truePiMnsTheta = new Double_t[maxParticles];
 	truePiMnsPhi = new Double_t[maxParticles];
 
-    particles = new TA2Particle[maxParticles];
+	particles = new TA2Particle[maxParticles];
 
 	timeLeptons = new Double_t[2+1];
 	timeTagger = new Double_t[maxBeamPhotons];
 	dTimeFS = new Double_t[maxBeamPhotons];
 
-	for (int i = 0; i < N_WINDOWS; i++) {
-		invM_protE[i] = new Double_t[maxBeamPhotons];
-		invM_copl[i] = new Double_t[maxBeamPhotons];
-		invM_balance[i] = new Double_t[maxBeamPhotons];
-		invM_dAlphaProtTAPS[i] = new Double_t[maxBeamPhotons];
-		invM_missM[i] = new Double_t[maxBeamPhotons];
-		invM_copl_balance[i] = new Double_t[maxBeamPhotons];
-		invM_balance_missM[i] = new Double_t[maxBeamPhotons];
-		invM_copl_missM[i] = new Double_t[maxBeamPhotons];
-		invM_balance_dAlpha[i] = new Double_t[maxBeamPhotons];
-		invM_allCuts[i] = new Double_t[maxBeamPhotons];
+	for (unsigned int i = 0; i < N_WINDOWS; i++) {
+		for (unsigned int j = 0; j < unknown; j++) {
+			invM_cuts[j][i] = new Double_t[maxBeamPhotons];
+			n_cuts[j] = new UInt_t[N_WINDOWS];
+		}
 		balancePx[i] = new Double_t[maxBeamPhotons];
 		balancePy[i] = new Double_t[maxBeamPhotons];
 		balancePz[i] = new Double_t[maxBeamPhotons];
 		balanceE[i] = new Double_t[maxBeamPhotons];
-		missM[i] = new Double_t[maxBeamPhotons];
+		missMass[i] = new Double_t[maxBeamPhotons];
 		protonEnergyExpect[i] = new Double_t[maxBeamPhotons];
 		protDAlphaTAPSCl[i] = new Double_t[maxBeamPhotons];
 	}
@@ -388,8 +381,8 @@ void TA2SaschaPhysics::PostInit()
 		printf("Error opening the file containing the cuts!\n");
 		exit(1);
 	}
-    //TODO: seems to lead to a crash when not used as TCutG balance = ... ?
-    //cutBalance = *(TCutG*)cutFile.Get("balanceCut");
+	//TODO: seems to lead to a crash when not used as TCutG balance = ... ?
+	//cutBalance = *(TCutG*)cutFile.Get("balanceCut");
 	cutFile.Close();
 
 	// just for testing
@@ -603,25 +596,16 @@ bool TA2SaschaPhysics::ApplyCuts()
 
 	// reset all counters
 	nPrompt = nRandom = 0;
-	for (int i = 0; i < N_WINDOWS; i++) {
-		n_protE[i] = 0;
-		n_copl[i] = 0;
-		n_balance[i] = 0;
-		n_dAlphaProtTAPS[i] = 0;
-		n_missM[i] = 0;
-		n_copl_balance[i] = 0;
-		n_balance_missM[i] = 0;
-		n_copl_missM[i] = 0;
-		n_balance_dAlpha[i] = 0;
-		n_allCuts[i] = 0;
-	}
+	for (unsigned int i = 0; i < unknown; i++)
+		for (unsigned int j = 0; j < N_WINDOWS; j++)
+			n_cuts[i][j] = 0;
 
 	if (!trigger && MC)
 		return success;  // return success (which is false until here) if MC event was not triggered, also skip everything
 
 	TLorentzVector tmpState(0., 0., 0., 0.);
 	TLorentzVector chargedPart[N_FINAL_STATE];
-	TLorentzVector balance, missProton;
+	TLorentzVector balanceP4, missProton;
 	// variables to store values only for cuts
 	Double_t mMiss, protEexpect, dAlphaProtTAPS;
 
@@ -658,7 +642,7 @@ bool TA2SaschaPhysics::ApplyCuts()
 			// for testing, as EDMultiX doesn't do anything...
 			taggerTime->Fill(Tagged[i].GetTime());
 			dTimeFS[i] = timeTagger[i] - timeFS;
-			balance = tmpState + particles[nParticlesCB].GetP4() - fP4target[0] - Tagged[i].GetP4();
+			balanceP4 = tmpState + particles[nParticlesCB].GetP4() - fP4target[0] - Tagged[i].GetP4();
 			missProton = fP4target[0] + Tagged[i].GetP4() - tmpState;
 			dAlphaProtTAPS = particles[nParticlesCB].GetP4().Angle(missProton.Vect())*R2D;  // opening angle between TAPS cluster and expected proton
 			mMiss = missProton.M();
@@ -667,7 +651,7 @@ bool TA2SaschaPhysics::ApplyCuts()
 			/* now "apply" the kinematic cuts */
 			passedProtonEnergy = protEexpect < 350. ? true : false;
 			passedCoplanarity = coplanarity > 160. && coplanarity < 200 ? true : false;
-			passedBalance = true;//cutBalance.IsInside(balance.E(), balance.Pz()) ? true : false;
+			passedBalance = true;//cutBalance.IsInside(balanceP4.E(), balanceP4.Pz()) ? true : false;
 			passedDAlphaProtTAPS = dAlphaProtTAPS < 6. ? true : false;
 			passedMissMass = true;//mMiss > 900. && mMiss < 980. ? true : false;
 			if (passedProtonEnergy && passedCoplanarity && passedBalance && passedDAlphaProtTAPS && passedMissMass && passedInvMass)
@@ -686,54 +670,54 @@ bool TA2SaschaPhysics::ApplyCuts()
 
 			/* first fill the prompt histograms */
 			if ((timeTagger[i] >= promptLow && timeTagger[i] <= promptHigh) || MC) {  // if MC events are processed then fill them in the prompt array
-				missM[PROMPT][nPrompt] = mMiss;
-				balancePx[PROMPT][nPrompt] = balance.Px();
-				balancePy[PROMPT][nPrompt] = balance.Py();
-				balancePz[PROMPT][nPrompt] = balance.Pz();
-				balanceE[PROMPT][nPrompt] = balance.E();
+				missMass[PROMPT][nPrompt] = mMiss;
+				balancePx[PROMPT][nPrompt] = balanceP4.Px();
+				balancePy[PROMPT][nPrompt] = balanceP4.Py();
+				balancePz[PROMPT][nPrompt] = balanceP4.Pz();
+				balanceE[PROMPT][nPrompt] = balanceP4.E();
 				protonEnergyExpect[PROMPT][nPrompt] = protEexpect;
 				protDAlphaTAPSCl[PROMPT][nPrompt] = dAlphaProtTAPS;
 				nPrompt++;
 
 				if (passedProtonEnergy) {
-					invM_protE[PROMPT][n_protE[PROMPT]] = invM_2charged;
-					n_protE[PROMPT]++;
+					invM_cuts[protE][PROMPT][n_cuts[protE][PROMPT]] = invM_2charged;
+					n_cuts[protE][PROMPT]++;
 				}
 				if (passedCoplanarity) {
-					invM_copl[PROMPT][n_copl[PROMPT]] = invM_2charged;
-					n_copl[PROMPT]++;
+					invM_cuts[copl][PROMPT][n_cuts[copl][PROMPT]] = invM_2charged;
+					n_cuts[copl][PROMPT]++;
 				}
 				if (passedBalance) {
-					invM_balance[PROMPT][n_balance[PROMPT]] = invM_2charged;
-					n_balance[PROMPT]++;
+					invM_cuts[balance][PROMPT][n_cuts[balance][PROMPT]] = invM_2charged;
+					n_cuts[balance][PROMPT]++;
 				}
 				if (passedDAlphaProtTAPS) {
-					invM_dAlphaProtTAPS[PROMPT][n_dAlphaProtTAPS[PROMPT]] = invM_2charged;
-					n_dAlphaProtTAPS[PROMPT]++;
+					invM_cuts[dAlpha][PROMPT][n_cuts[dAlpha][PROMPT]] = invM_2charged;
+					n_cuts[dAlpha][PROMPT]++;
 				}
 				if (passedMissMass) {
-					invM_missM[PROMPT][n_missM[PROMPT]] = invM_2charged;
-					n_missM[PROMPT]++;
+					invM_cuts[missM][PROMPT][n_cuts[missM][PROMPT]] = invM_2charged;
+					n_cuts[missM][PROMPT]++;
 				}
 				if (passedCoplanarity && passedBalance) {
-					invM_copl_balance[PROMPT][n_copl_balance[PROMPT]] = invM_2charged;
-					n_copl_balance[PROMPT]++;
+					invM_cuts[copl_balance][PROMPT][n_cuts[copl_balance][PROMPT]] = invM_2charged;
+					n_cuts[copl_balance][PROMPT]++;
 				}
 				if (passedBalance && passedMissMass) {
-					invM_balance_missM[PROMPT][n_balance_missM[PROMPT]] = invM_2charged;
-					n_balance_missM[PROMPT]++;
+					invM_cuts[balance_missM][PROMPT][n_cuts[balance_missM][PROMPT]] = invM_2charged;
+					n_cuts[balance_missM][PROMPT]++;
 				}
 				if (passedCoplanarity && passedMissMass) {
-					invM_copl_missM[PROMPT][n_copl_missM[PROMPT]] = invM_2charged;
-					n_copl_missM[PROMPT]++;
+					invM_cuts[copl_missM][PROMPT][n_cuts[copl_missM][PROMPT]] = invM_2charged;
+					n_cuts[copl_missM][PROMPT]++;
 				}
 				if (passedBalance && passedDAlphaProtTAPS) {
-					invM_balance_dAlpha[PROMPT][n_balance_dAlpha[PROMPT]] = invM_2charged;
-					n_balance_dAlpha[PROMPT]++;
+					invM_cuts[balance_dAlpha][PROMPT][n_cuts[balance_dAlpha][PROMPT]] = invM_2charged;
+					n_cuts[balance_dAlpha][PROMPT]++;
 				}
 				if (passedAllCuts) {
-					invM_allCuts[PROMPT][n_allCuts[PROMPT]] = invM_2charged;
-					n_allCuts[PROMPT]++;
+					invM_cuts[all][PROMPT][n_cuts[all][PROMPT]] = invM_2charged;
+					n_cuts[all][PROMPT]++;
 
 					// if all cuts in the prompt window were passed, set success to true which is returned by this method
 					if (success)
@@ -744,54 +728,54 @@ bool TA2SaschaPhysics::ApplyCuts()
 
 			/* now the random ones */
 			if ((timeTagger[i] >= random1Low && timeTagger[i] <= random1High) || (timeTagger[i] >= random2Low && timeTagger[i] <= random2High)) {
-				missM[RANDOM][nRandom] = mMiss;
-				balancePx[RANDOM][nRandom] = balance.Px();
-				balancePy[RANDOM][nRandom] = balance.Py();
-				balancePz[RANDOM][nRandom] = balance.Pz();
-				balanceE[RANDOM][nRandom] = balance.E();
+				missMass[RANDOM][nRandom] = mMiss;
+				balancePx[RANDOM][nRandom] = balanceP4.Px();
+				balancePy[RANDOM][nRandom] = balanceP4.Py();
+				balancePz[RANDOM][nRandom] = balanceP4.Pz();
+				balanceE[RANDOM][nRandom] = balanceP4.E();
 				protonEnergyExpect[RANDOM][nRandom] = protEexpect;
 				protDAlphaTAPSCl[RANDOM][nRandom] = dAlphaProtTAPS;
 				nRandom++;
 
 				if (passedProtonEnergy) {
-					invM_protE[RANDOM][n_protE[RANDOM]] = invM_2charged;
-					n_protE[RANDOM]++;
+					invM_cuts[protE][RANDOM][n_cuts[protE][RANDOM]] = invM_2charged;
+					n_cuts[protE][RANDOM]++;
 				}
 				if (passedCoplanarity) {
-					invM_copl[RANDOM][n_copl[RANDOM]] = invM_2charged;
-					n_copl[RANDOM]++;
+					invM_cuts[copl][RANDOM][n_cuts[copl][RANDOM]] = invM_2charged;
+					n_cuts[copl][RANDOM]++;
 				}
 				if (passedBalance) {
-					invM_balance[RANDOM][n_balance[RANDOM]] = invM_2charged;
-					n_balance[RANDOM]++;
+					invM_cuts[balance][RANDOM][n_cuts[balance][RANDOM]] = invM_2charged;
+					n_cuts[balance][RANDOM]++;
 				}
 				if (passedDAlphaProtTAPS) {
-					invM_dAlphaProtTAPS[RANDOM][n_dAlphaProtTAPS[RANDOM]] = invM_2charged;
-					n_dAlphaProtTAPS[RANDOM]++;
+					invM_cuts[dAlpha][RANDOM][n_cuts[dAlpha][RANDOM]] = invM_2charged;
+					n_cuts[dAlpha][RANDOM]++;
 				}
 				if (passedMissMass) {
-					invM_missM[RANDOM][n_missM[RANDOM]] = invM_2charged;
-					n_missM[RANDOM]++;
+					invM_cuts[missM][RANDOM][n_cuts[missM][RANDOM]] = invM_2charged;
+					n_cuts[missM][RANDOM]++;
 				}
 				if (passedCoplanarity && passedBalance) {
-					invM_copl_balance[RANDOM][n_copl_balance[RANDOM]] = invM_2charged;
-					n_copl_balance[RANDOM]++;
+					invM_cuts[copl_balance][RANDOM][n_cuts[copl_balance][RANDOM]] = invM_2charged;
+					n_cuts[copl_balance][RANDOM]++;
 				}
 				if (passedBalance && passedMissMass) {
-					invM_balance_missM[RANDOM][n_balance_missM[RANDOM]] = invM_2charged;
-					n_balance_missM[RANDOM]++;
+					invM_cuts[balance_missM][RANDOM][n_cuts[balance_missM][RANDOM]] = invM_2charged;
+					n_cuts[balance_missM][RANDOM]++;
 				}
 				if (passedCoplanarity && passedMissMass) {
-					invM_copl_missM[RANDOM][n_copl_missM[RANDOM]] = invM_2charged;
-					n_copl_missM[RANDOM]++;
+					invM_cuts[copl_missM][RANDOM][n_cuts[copl_missM][RANDOM]] = invM_2charged;
+					n_cuts[copl_missM][RANDOM]++;
 				}
 				if (passedBalance && passedDAlphaProtTAPS) {
-					invM_balance_dAlpha[RANDOM][n_balance_dAlpha[RANDOM]] = invM_2charged;
-					n_balance_dAlpha[RANDOM]++;
+					invM_cuts[balance_dAlpha][RANDOM][n_cuts[balance_dAlpha][RANDOM]] = invM_2charged;
+					n_cuts[balance_dAlpha][RANDOM]++;
 				}
 				if (passedAllCuts) {
-					invM_allCuts[RANDOM][n_allCuts[RANDOM]] = invM_2charged;
-					n_allCuts[RANDOM]++;
+					invM_cuts[all][RANDOM][n_cuts[all][RANDOM]] = invM_2charged;
+					n_cuts[all][RANDOM]++;
 				}
 			}
 
@@ -908,22 +892,14 @@ void TA2SaschaPhysics::VarInit()
 	invMass6CB = EBufferEnd;
 	invMass6CB1TAPS = EBufferEnd;
 
-	for (int i = 0; i < N_WINDOWS; i++) {
-		invM_protE[i][0] = EBufferEnd;
-		invM_copl[i][0] = EBufferEnd;
-		invM_balance[i][0] = EBufferEnd;
-		invM_dAlphaProtTAPS[i][0] = EBufferEnd;
-		invM_missM[i][0] = EBufferEnd;
-		invM_copl_balance[i][0] = EBufferEnd;
-		invM_balance_missM[i][0] = EBufferEnd;
-		invM_copl_missM[i][0] = EBufferEnd;
-		invM_balance_dAlpha[i][0] = EBufferEnd;
-		invM_allCuts[i][0] = EBufferEnd;
+	for (unsigned int i = 0; i < N_WINDOWS; i++) {
+		for (unsigned int j = 0; j < unknown; j++)
+			invM_cuts[j][i][0] = EBufferEnd;
 		balancePx[i][0] = EBufferEnd;
 		balancePy[i][0] = EBufferEnd;
 		balancePz[i][0] = EBufferEnd;
 		balanceE[i][0] = EBufferEnd;
-		missM[i][0] = EBufferEnd;
+		missMass[i][0] = EBufferEnd;
 		protonEnergyExpect[i][0] = EBufferEnd;
 		protDAlphaTAPSCl[i][0] = EBufferEnd;
 	}
@@ -973,22 +949,14 @@ void TA2SaschaPhysics::TermArrays()
 	timeTagger[nBeamPhotons] = EBufferEnd;
 	dTimeFS[nBeamPhotons] = EBufferEnd;
 
-	for (int i = 0; i < N_WINDOWS; i++) {
-		invM_protE[i][n_protE[i]] = EBufferEnd;
-		invM_copl[i][n_copl[i]] = EBufferEnd;
-		invM_balance[i][n_balance[i]] = EBufferEnd;
-		invM_dAlphaProtTAPS[i][n_dAlphaProtTAPS[i]] = EBufferEnd;
-		invM_missM[i][n_missM[i]] = EBufferEnd;
-		invM_copl_balance[i][n_copl_balance[i]] = EBufferEnd;
-		invM_balance_missM[i][n_balance_missM[i]] = EBufferEnd;
-		invM_copl_missM[i][n_copl_missM[i]] = EBufferEnd;
-		invM_balance_dAlpha[i][n_balance_dAlpha[i]] = EBufferEnd;
-		invM_allCuts[i][n_allCuts[i]] = EBufferEnd;
+	for (unsigned int i = 0; i < N_WINDOWS; i++) {
+		for (unsigned int j = 0; j < unknown; j++)
+			invM_cuts[j][i][n_cuts[j][i]] = EBufferEnd;
 		balancePx[i][nPrompt] = EBufferEnd;
 		balancePy[i][nPrompt] = EBufferEnd;
 		balancePz[i][nPrompt] = EBufferEnd;
 		balanceE[i][nPrompt] = EBufferEnd;
-		missM[i][nPrompt] = EBufferEnd;
+		missMass[i][nPrompt] = EBufferEnd;
 		protonEnergyExpect[i][nPrompt] = EBufferEnd;
 		protDAlphaTAPSCl[i][nPrompt] = EBufferEnd;
 	}
