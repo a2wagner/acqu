@@ -64,6 +64,9 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	// Print speed information if specified in config file
 	bool speed_info;
 
+	// Print some output for debugging if set to true via config
+	bool dbg;
+
 	// Kinematic fit
 	TA2CBKinematicFitter* KinFitter;
 	TA2KFParticle KFPhoton[2];

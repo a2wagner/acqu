@@ -7,12 +7,13 @@
 
 #include "TA2SaschaPhysics.h"
 
-enum { EPromptWindows = 1000, ERandomWindows, ESpeedInfo};
+enum { EPromptWindows = 1000, ERandomWindows, ESpeedInfo, EDebug};
 
 static const Map_t kPhysics[] = {
 	{"Prompt:", EPromptWindows},
 	{"Random:", ERandomWindows},
 	{"SpeedInfo:", ESpeedInfo},
+	{"Debug:", EDebug},
 	{NULL, -1}
 };
 
@@ -136,6 +137,9 @@ void TA2SaschaPhysics::SetConfig(Char_t* line, Int_t key)
 		speed_info = true;
 		std::cout << "Analysis speed information will be printed" << std::endl;
 		break;
+	case EDebug:
+		dbg = true;
+		std::cout << "Some additional information for debugging will be printed" << std::endl;
 	default:
 		// default SetConfig()
 		TA2BasePhysics::SetConfig(line, key);
@@ -408,11 +412,18 @@ void TA2SaschaPhysics::Reconstruct()
 	//Perform basic physics tasks
 	TA2BasePhysics::Reconstruct();
 
-	bool dbg = false;  // print some output for debugging if set to true
-
 	//Initialise array counters
 	VarInit();
 
+	Char_t currentFile[1024];
+	gUAN->ReadRunName(currentFile);  // save filename without path and ending in the specified char array
+
+	if (dbg)
+		std::cout << "Processing file " << currentFile 
+			<< ", event number: " << gAN->GetNEvent() 
+			<< " (" << gAN->GetNEvAnalysed() << " accepted)" << std::endl;
+
+	// Print speed information if set in config
 	if (speed_info) {
 		static int START = time(NULL);
 		static int start = START;
@@ -427,12 +438,6 @@ void TA2SaschaPhysics::Reconstruct()
 			}
 		}
 	}
-
-	Char_t currentFile[1024];
-	gUAN->ReadRunName(currentFile);  // save filename without path and ending in the specified char array
-
-	if (dbg)
-		std::cout << "Processing file " << currentFile << std::endl;
 
 	// Get true information from simulation
 	//if (strstr(currentFile, "g4_sim")) {  // if the filename contains "g4_sim" than it is one of my generated Monte Carlo event files

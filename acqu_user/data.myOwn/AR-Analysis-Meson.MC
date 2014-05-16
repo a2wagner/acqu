@@ -95,6 +95,9 @@ Display: 1D promptRandomRatio 1000 0. 1.
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
+# Print some additional information for debugging purposes
+#Debug:
+#
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 # Display speed information of the analysis
