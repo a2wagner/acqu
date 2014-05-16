@@ -69,15 +69,15 @@ Initialise:
 ## The procedures are usually held in macro script files
 ## Period...every N events
 ##        N         Macro File          Macro Procedure
-#Period:   100000    PeriodMacro.C       PeriodMacro()
+#Period:   100000    root/macros/PeriodMacro.C       PeriodMacro()
 ##
 ## EndFile...each time an input data file is closed
 ##                  Macro File          Macro Procedure
-EndFile:           EndFileMacro.C      EndFileMacro()
+EndFile:           root/macros/EndFileMacro.C      EndFileMacro()
 ##
 ## Finish...when all input data files processed
 ##                  Macro File          Macro Procedure
-#Finish:            FinishMacro.C       FinishMacro()
+#Finish:            root/macros/FinishMacro.C       FinishMacro()
 ##
 ## Save all accepted events (ie those which pass all data cuts) to a
 ## ROOT file. Data saved in RAW format (ie ADC indices and values)
