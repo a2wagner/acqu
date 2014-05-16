@@ -61,6 +61,9 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	// Flag for checking what data type will be processed
 	Bool_t MC;
 
+	// Print speed information if specified in config file
+	bool speed_info;
+
 	// Kinematic fit
 	TA2CBKinematicFitter* KinFitter;
 	TA2KFParticle KFPhoton[2];

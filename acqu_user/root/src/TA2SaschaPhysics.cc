@@ -7,11 +7,12 @@
 
 #include "TA2SaschaPhysics.h"
 
-enum { EPromptWindows = 1000, ERandomWindows};
+enum { EPromptWindows = 1000, ERandomWindows, ESpeedInfo};
 
 static const Map_t kPhysics[] = {
-	{"Prompt:",	EPromptWindows},
-	{"Random:",	ERandomWindows},
+	{"Prompt:", EPromptWindows},
+	{"Random:", ERandomWindows},
+	{"SpeedInfo:", ESpeedInfo},
 	{NULL, -1}
 };
 
@@ -130,6 +131,10 @@ void TA2SaschaPhysics::SetConfig(Char_t* line, Int_t key)
 			return;
 		} else
 			printf("Random windows set from %f to %f and from %f to %f\n", random1Low, random1High, random2Low, random2High);
+		break;
+	case ESpeedInfo:
+		speed_info = true;
+		std::cout << "Analysis speed information will be printed" << std::endl;
 		break;
 	default:
 		// default SetConfig()
@@ -407,7 +412,22 @@ void TA2SaschaPhysics::Reconstruct()
 
 	//Initialise array counters
 	VarInit();
-	  
+
+	if (speed_info) {
+		static int START = time(NULL);
+		static int start = START;
+		if (gAN->GetNEvent()%500000 == 0)
+			printf("Processed %.1fM events after %d:%.02d min\n", gAN->GetNEvent()/1000000., (int)(time(NULL) - START)/60, (int)(time(NULL) - START)%60);
+		if (dbg) {
+		static int nEvents = 0;
+			if ((time(NULL) - start) >= 60) {
+				start = time(NULL);
+				printf("Processed %d events after %d minutes (%d events/s)\n", gAN->GetNEvent(), (int)(time(NULL) - START)/60, nEvents/60);
+				nEvents = gAN->GetNEvent();
+			}
+		}
+	}
+
 	Char_t currentFile[1024];
 	gUAN->ReadRunName(currentFile);  // save filename without path and ending in the specified char array
 

@@ -96,6 +96,13 @@ Display: 1D promptRandomRatio 1000 0. 1.
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+# Display speed information of the analysis
+SpeedInfo:
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #Options to control single meson analysis (cut windows, etc.):
 #- Invariant mass (2 photons) range to be accepted as meson (pi0/eta)
 #- Missing mass (from beam, proton target and reconstructed meson) range
