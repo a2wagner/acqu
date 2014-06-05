@@ -23,7 +23,7 @@ void saveAnalysis()
 	char file[80];
 	tstruct = *localtime(&now);
 	// http://www.cplusplus.com/reference/clibrary/ctime/strftime/
-	strftime(file, sizeof(file), "Analysis_%d.%m.%Y_autosave.root", &tstruct);
+	strftime(file, sizeof(file), "Analysis_%Y-%m-%d_autosave.root", &tstruct);
 
 	printf("Executing End-of-Run macro, saving analysis to %s\n", file);
 	gUAN->SaveAll(file);

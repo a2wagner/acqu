@@ -26,6 +26,10 @@ class TA2Apparatus;
 
 class TA2SaschaPhysics : public TA2BasePhysics
 {
+	typedef std::map<int, const char*> IntCharMap;
+	typedef std::pair<int, const char*> ICPair;
+	typedef std::map<int, const char*>::iterator ICIter;
+
   protected:
 	// enum for numbering of different cuts and cut combinations
 	enum cuts {
@@ -47,6 +51,9 @@ class TA2SaschaPhysics : public TA2BasePhysics
 		all,
 		unknown
 	};
+
+	// Declare a map which is used to easily manage the used cuts and their combinations
+	IntCharMap cut_names;
 
 	// Apparati for the different used detectors
 	TA2Tagger* fTAG;  // Tagger
@@ -169,6 +176,7 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	Double_t coplanarity, protEnergyReconstr;
 
 	Double_t* invM_cuts[unknown][N_WINDOWS];
+	Double_t* missM_cuts[unknown][N_WINDOWS];
 	Double_t* balancePx[N_WINDOWS];
 	Double_t* balancePy[N_WINDOWS];
 	Double_t* balancePz[N_WINDOWS];

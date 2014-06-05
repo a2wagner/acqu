@@ -31,6 +31,24 @@ TA2SaschaPhysics::TA2SaschaPhysics(const char* Name, TA2Analysis* Analysis) : TA
 	random2Low = 6;
 	random2High = 36;
 
+	// Fill the map with all the desired cuts and combinations of them
+	cut_names.insert(ICPair(protE, "protE"));
+	cut_names.insert(ICPair(copl, "copl"));
+	cut_names.insert(ICPair(balance, "balance"));
+	cut_names.insert(ICPair(dAlpha, "dAlpha"));
+	cut_names.insert(ICPair(missM, "missM"));
+	cut_names.insert(ICPair(invM, "invM"));
+	cut_names.insert(ICPair(copl_balance, "copl_balance"));
+	cut_names.insert(ICPair(balance_missM, "balance_missM"));
+	cut_names.insert(ICPair(protE_copl, "protE_copl"));
+	cut_names.insert(ICPair(copl_missM, "copl_missM"));
+	cut_names.insert(ICPair(missM_invM, "missM_invM"));
+	cut_names.insert(ICPair(balance_dAlpha, "balance_dAlpha"));
+	cut_names.insert(ICPair(copl_dAlpha, "copl_dAlpha"));
+	cut_names.insert(ICPair(protE_copl_balance, "protE_copl_balance"));
+	cut_names.insert(ICPair(copl_balance_dAlpha, "copl_balance_dAlpha"));
+	cut_names.insert(ICPair(all, "allCuts"));
+
 	AddCmdList(kPhysics);  // enables keyword recognition in SetConfig
 }
 
@@ -90,7 +108,9 @@ TA2SaschaPhysics::~TA2SaschaPhysics()
 	for (unsigned int i = 0; i < N_WINDOWS; i++) {
 		for (unsigned int j = 0; j < unknown; j++) {
 			delete[] invM_cuts[j][i];
+			delete[] missM_cuts[j][i];
 			delete[] invM_cuts[j];
+			delete[] missM_cuts[j];
 			delete[] n_cuts[j];
 		}
 		delete[] balancePx[i];
@@ -102,6 +122,7 @@ TA2SaschaPhysics::~TA2SaschaPhysics()
 		delete[] protDAlphaTAPSCl[i];
 	}
 	delete[] invM_cuts;
+	delete[] missM_cuts;
 	delete[] balancePx;
 	delete[] balancePy;
 	delete[] balancePz;
@@ -228,7 +249,18 @@ void TA2SaschaPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("invMass6CB1TAPS", &invMass6CB1TAPS, EDSingleX);
 
 	// Prompt
-	TA2DataManager::LoadVariable("invM_protE_prompt", invM_cuts[protE][PROMPT], EDMultiX);
+	char buffer[50];
+	for (ICIter it = cut_names.begin(); it != cut_names.end(); ++it) {
+		sprintf(buffer, "invM_%s_prompt", it->second);
+		if (dbg)
+			printf("Load cut variable %02d %s\n", it->first, buffer);
+		TA2DataManager::LoadVariable(buffer, invM_cuts[it->first][PROMPT], EDMultiX);
+		sprintf(buffer, "missM_%s_prompt", it->second);
+		if (dbg)
+			printf("Load cut variable %02d %s\n", it->first, buffer);
+		TA2DataManager::LoadVariable(buffer, missM_cuts[it->first][PROMPT], EDMultiX);
+	}
+	/*TA2DataManager::LoadVariable("invM_protE_prompt", invM_cuts[protE][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_copl_prompt", invM_cuts[copl][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_balance_prompt", invM_cuts[balance][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_prompt", invM_cuts[dAlpha][PROMPT], EDMultiX);
@@ -238,6 +270,12 @@ void TA2SaschaPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("invM_copl_missM_prompt", invM_cuts[copl_missM][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_balance_dAlpha_prompt", invM_cuts[balance_dAlpha][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_allCuts_prompt", invM_cuts[all][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_protE_prompt", missM_cuts[protE][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_copl_prompt", missM_cuts[copl][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_balance_prompt", missM_cuts[balance][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_dAlphaProtTAPS_prompt", missM_cuts[dAlpha][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_invM_prompt", missM_cuts[invM][PROMPT], EDMultiX);
+	TA2DataManager::LoadVariable("missM_allCuts_prompt", missM_cuts[all][PROMPT], EDMultiX);*/
 	TA2DataManager::LoadVariable("balancePx_prompt", balancePx[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balancePy_prompt", balancePy[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("balancePz_prompt", balancePz[PROMPT], EDMultiX);
@@ -246,7 +284,17 @@ void TA2SaschaPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("protonEnergyExpect_prompt", protonEnergyExpect[PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("protDAlphaTAPSCl_prompt", protDAlphaTAPSCl[PROMPT], EDMultiX);
 	// Random
-	TA2DataManager::LoadVariable("invM_protE_random", invM_cuts[protE][RANDOM], EDMultiX);
+	for (ICIter it = cut_names.begin(); it != cut_names.end(); ++it) {
+		sprintf(buffer, "invM_%s_random", it->second);
+		if (dbg)
+			printf("Load cut variable %02d %s\n", it->first, buffer);
+		TA2DataManager::LoadVariable(buffer, invM_cuts[it->first][RANDOM], EDMultiX);
+		sprintf(buffer, "missM_%s_random", it->second);
+		if (dbg)
+			printf("Load cut variable %02d %s\n", it->first, buffer);
+		TA2DataManager::LoadVariable(buffer, missM_cuts[it->first][RANDOM], EDMultiX);
+	}
+	/*TA2DataManager::LoadVariable("invM_protE_random", invM_cuts[protE][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_copl_random", invM_cuts[copl][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_balance_random", invM_cuts[balance][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_dAlphaProtTAPS_random", invM_cuts[dAlpha][RANDOM], EDMultiX);
@@ -256,6 +304,12 @@ void TA2SaschaPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("invM_copl_missM_random", invM_cuts[copl_missM][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_balance_dAlpha_random", invM_cuts[balance_dAlpha][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_allCuts_random", invM_cuts[all][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_protE_random", missM_cuts[protE][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_copl_random", missM_cuts[copl][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_balance_random", missM_cuts[balance][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_dAlphaProtTAPS_random", missM_cuts[dAlpha][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_invM_random", missM_cuts[invM][RANDOM], EDMultiX);
+	TA2DataManager::LoadVariable("missM_allCuts_random", missM_cuts[all][RANDOM], EDMultiX);*/
 	TA2DataManager::LoadVariable("balancePx_random", balancePx[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balancePy_random", balancePy[RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("balancePz_random", balancePz[RANDOM], EDMultiX);
@@ -372,6 +426,7 @@ void TA2SaschaPhysics::PostInit()
 	for (unsigned int i = 0; i < N_WINDOWS; i++) {
 		for (unsigned int j = 0; j < unknown; j++) {
 			invM_cuts[j][i] = new Double_t[maxBeamPhotons];
+			missM_cuts[j][i] = new Double_t[maxBeamPhotons];
 			n_cuts[j] = new UInt_t[N_WINDOWS];
 		}
 		balancePx[i] = new Double_t[maxBeamPhotons];
@@ -707,42 +762,78 @@ bool TA2SaschaPhysics::ApplyCuts()
 
 				if (passedProtonEnergy) {
 					invM_cuts[protE][PROMPT][n_cuts[protE][PROMPT]] = invM_2charged;
+					missM_cuts[protE][PROMPT][n_cuts[protE][PROMPT]] = mMiss;
 					n_cuts[protE][PROMPT]++;
 				}
 				if (passedCoplanarity) {
 					invM_cuts[copl][PROMPT][n_cuts[copl][PROMPT]] = invM_2charged;
+					missM_cuts[copl][PROMPT][n_cuts[copl][PROMPT]] = mMiss;
 					n_cuts[copl][PROMPT]++;
 				}
 				if (passedBalance) {
 					invM_cuts[balance][PROMPT][n_cuts[balance][PROMPT]] = invM_2charged;
+					missM_cuts[balance][PROMPT][n_cuts[balance][PROMPT]] = mMiss;
 					n_cuts[balance][PROMPT]++;
 				}
 				if (passedDAlphaProtTAPS) {
 					invM_cuts[dAlpha][PROMPT][n_cuts[dAlpha][PROMPT]] = invM_2charged;
+					missM_cuts[dAlpha][PROMPT][n_cuts[dAlpha][PROMPT]] = mMiss;
 					n_cuts[dAlpha][PROMPT]++;
 				}
 				if (passedMissMass) {
 					invM_cuts[missM][PROMPT][n_cuts[missM][PROMPT]] = invM_2charged;
 					n_cuts[missM][PROMPT]++;
 				}
+				if (passedInvMass) {
+					missM_cuts[invM][PROMPT][n_cuts[invM][PROMPT]] = mMiss;
+					n_cuts[invM][PROMPT]++;
+				}
 				if (passedCoplanarity && passedBalance) {
 					invM_cuts[copl_balance][PROMPT][n_cuts[copl_balance][PROMPT]] = invM_2charged;
+					missM_cuts[copl_balance][PROMPT][n_cuts[copl_balance][PROMPT]] = mMiss;
 					n_cuts[copl_balance][PROMPT]++;
 				}
 				if (passedBalance && passedMissMass) {
 					invM_cuts[balance_missM][PROMPT][n_cuts[balance_missM][PROMPT]] = invM_2charged;
+					missM_cuts[balance_missM][PROMPT][n_cuts[balance_missM][PROMPT]] = mMiss;
 					n_cuts[balance_missM][PROMPT]++;
+				}
+				if (passedProtonEnergy && passedCoplanarity) {
+					invM_cuts[protE_copl][PROMPT][n_cuts[protE_copl][PROMPT]] = invM_2charged;
+					missM_cuts[protE_copl][PROMPT][n_cuts[protE_copl][PROMPT]] = mMiss;
+					n_cuts[protE_copl][PROMPT]++;
 				}
 				if (passedCoplanarity && passedMissMass) {
 					invM_cuts[copl_missM][PROMPT][n_cuts[copl_missM][PROMPT]] = invM_2charged;
 					n_cuts[copl_missM][PROMPT]++;
 				}
+				if (passedMissMass && passedInvMass) {
+					//TODO
+					n_cuts[missM_invM][PROMPT]++;
+				}
 				if (passedBalance && passedDAlphaProtTAPS) {
 					invM_cuts[balance_dAlpha][PROMPT][n_cuts[balance_dAlpha][PROMPT]] = invM_2charged;
+					missM_cuts[balance_dAlpha][PROMPT][n_cuts[balance_dAlpha][PROMPT]] = mMiss;
 					n_cuts[balance_dAlpha][PROMPT]++;
+				}
+				if (passedCoplanarity && passedDAlphaProtTAPS) {
+					invM_cuts[copl_dAlpha][PROMPT][n_cuts[copl_dAlpha][PROMPT]] = invM_2charged;
+					missM_cuts[copl_dAlpha][PROMPT][n_cuts[copl_dAlpha][PROMPT]] = mMiss;
+					n_cuts[copl_dAlpha][PROMPT]++;
+				}
+				if (passedProtonEnergy && passedCoplanarity && passedBalance) {
+					invM_cuts[protE_copl_balance][PROMPT][n_cuts[protE_copl_balance][PROMPT]] = invM_2charged;
+					missM_cuts[protE_copl_balance][PROMPT][n_cuts[protE_copl_balance][PROMPT]] = mMiss;
+					n_cuts[protE_copl_balance][PROMPT]++;
+				}
+				if (passedCoplanarity && passedBalance && passedDAlphaProtTAPS) {
+					invM_cuts[copl_balance_dAlpha][PROMPT][n_cuts[copl_balance_dAlpha][PROMPT]] = invM_2charged;
+					missM_cuts[copl_balance_dAlpha][PROMPT][n_cuts[copl_balance_dAlpha][PROMPT]] = mMiss;
+					n_cuts[copl_balance_dAlpha][PROMPT]++;
 				}
 				if (passedAllCuts) {
 					invM_cuts[all][PROMPT][n_cuts[all][PROMPT]] = invM_2charged;
+					missM_cuts[all][PROMPT][n_cuts[all][PROMPT]] = mMiss;
 					n_cuts[all][PROMPT]++;
 
 					// if all cuts in the prompt window were passed, set success to true which is returned by this method
@@ -765,42 +856,77 @@ bool TA2SaschaPhysics::ApplyCuts()
 
 				if (passedProtonEnergy) {
 					invM_cuts[protE][RANDOM][n_cuts[protE][RANDOM]] = invM_2charged;
+					missM_cuts[protE][RANDOM][n_cuts[protE][RANDOM]] = mMiss;
 					n_cuts[protE][RANDOM]++;
 				}
 				if (passedCoplanarity) {
 					invM_cuts[copl][RANDOM][n_cuts[copl][RANDOM]] = invM_2charged;
+					missM_cuts[copl][RANDOM][n_cuts[copl][RANDOM]] = mMiss;
 					n_cuts[copl][RANDOM]++;
 				}
 				if (passedBalance) {
 					invM_cuts[balance][RANDOM][n_cuts[balance][RANDOM]] = invM_2charged;
+					missM_cuts[balance][RANDOM][n_cuts[balance][RANDOM]] = mMiss;
 					n_cuts[balance][RANDOM]++;
 				}
 				if (passedDAlphaProtTAPS) {
 					invM_cuts[dAlpha][RANDOM][n_cuts[dAlpha][RANDOM]] = invM_2charged;
+					missM_cuts[dAlpha][RANDOM][n_cuts[dAlpha][RANDOM]] = mMiss;
 					n_cuts[dAlpha][RANDOM]++;
 				}
 				if (passedMissMass) {
 					invM_cuts[missM][RANDOM][n_cuts[missM][RANDOM]] = invM_2charged;
 					n_cuts[missM][RANDOM]++;
 				}
+				if (passedInvMass) {
+					missM_cuts[invM][RANDOM][n_cuts[invM][RANDOM]] = mMiss;
+					n_cuts[invM][RANDOM]++;
+				}
 				if (passedCoplanarity && passedBalance) {
 					invM_cuts[copl_balance][RANDOM][n_cuts[copl_balance][RANDOM]] = invM_2charged;
+					missM_cuts[copl_balance][RANDOM][n_cuts[copl_balance][RANDOM]] = mMiss;
 					n_cuts[copl_balance][RANDOM]++;
 				}
 				if (passedBalance && passedMissMass) {
 					invM_cuts[balance_missM][RANDOM][n_cuts[balance_missM][RANDOM]] = invM_2charged;
 					n_cuts[balance_missM][RANDOM]++;
 				}
+				if (passedProtonEnergy && passedCoplanarity) {
+					invM_cuts[protE_copl][RANDOM][n_cuts[protE_copl][RANDOM]] = invM_2charged;
+					missM_cuts[protE_copl][RANDOM][n_cuts[protE_copl][RANDOM]] = mMiss;
+					n_cuts[protE_copl][RANDOM]++;
+				}
 				if (passedCoplanarity && passedMissMass) {
 					invM_cuts[copl_missM][RANDOM][n_cuts[copl_missM][RANDOM]] = invM_2charged;
 					n_cuts[copl_missM][RANDOM]++;
 				}
+				if (passedMissMass && passedInvMass) {
+					//TODO
+					n_cuts[missM_invM][RANDOM]++;
+				}
 				if (passedBalance && passedDAlphaProtTAPS) {
 					invM_cuts[balance_dAlpha][RANDOM][n_cuts[balance_dAlpha][RANDOM]] = invM_2charged;
+					missM_cuts[balance_dAlpha][RANDOM][n_cuts[balance_dAlpha][RANDOM]] = mMiss;
 					n_cuts[balance_dAlpha][RANDOM]++;
+				}
+				if (passedCoplanarity && passedDAlphaProtTAPS) {
+					invM_cuts[copl_dAlpha][RANDOM][n_cuts[copl_dAlpha][RANDOM]] = invM_2charged;
+					missM_cuts[copl_dAlpha][RANDOM][n_cuts[copl_dAlpha][RANDOM]] = mMiss;
+					n_cuts[copl_dAlpha][RANDOM]++;
+				}
+				if (passedProtonEnergy && passedCoplanarity && passedBalance) {
+					invM_cuts[protE_copl_balance][RANDOM][n_cuts[protE_copl_balance][RANDOM]] = invM_2charged;
+					missM_cuts[protE_copl_balance][RANDOM][n_cuts[protE_copl_balance][RANDOM]] = mMiss;
+					n_cuts[protE_copl_balance][RANDOM]++;
+				}
+				if (passedCoplanarity && passedBalance && passedDAlphaProtTAPS) {
+					invM_cuts[copl_balance_dAlpha][RANDOM][n_cuts[copl_balance][RANDOM]] = invM_2charged;
+					missM_cuts[copl_balance_dAlpha][RANDOM][n_cuts[copl_balance][RANDOM]] = mMiss;
+					n_cuts[copl_balance_dAlpha][RANDOM]++;
 				}
 				if (passedAllCuts) {
 					invM_cuts[all][RANDOM][n_cuts[all][RANDOM]] = invM_2charged;
+					missM_cuts[all][RANDOM][n_cuts[all][RANDOM]] = mMiss;
 					n_cuts[all][RANDOM]++;
 				}
 			}
@@ -919,8 +1045,10 @@ void TA2SaschaPhysics::VarInit()
 	invMass6CB1TAPS = EBufferEnd;
 
 	for (unsigned int i = 0; i < N_WINDOWS; i++) {
-		for (unsigned int j = 0; j < unknown; j++)
+		for (unsigned int j = 0; j < unknown; j++) {
 			invM_cuts[j][i][0] = EBufferEnd;
+			missM_cuts[j][i][0] = EBufferEnd;
+		}
 		balancePx[i][0] = EBufferEnd;
 		balancePy[i][0] = EBufferEnd;
 		balancePz[i][0] = EBufferEnd;
@@ -976,8 +1104,10 @@ void TA2SaschaPhysics::TermArrays()
 	dTimeFS[nBeamPhotons] = EBufferEnd;
 
 	for (unsigned int i = 0; i < N_WINDOWS; i++) {
-		for (unsigned int j = 0; j < unknown; j++)
+		for (unsigned int j = 0; j < unknown; j++) {
 			invM_cuts[j][i][n_cuts[j][i]] = EBufferEnd;
+			missM_cuts[j][i][n_cuts[j][i]] = EBufferEnd;
+		}
 		balancePx[i][nPrompt] = EBufferEnd;
 		balancePy[i][nPrompt] = EBufferEnd;
 		balancePz[i][nPrompt] = EBufferEnd;
