@@ -250,15 +250,20 @@ void TA2SaschaPhysics::LoadVariable()
 
 	// Prompt
 	char buffer[50];
+	char* hist_name;
 	for (ICIter it = cut_names.begin(); it != cut_names.end(); ++it) {
 		sprintf(buffer, "invM_%s_prompt", it->second);
 		if (dbg)
 			printf("Load cut variable %02d %s\n", it->first, buffer);
-		TA2DataManager::LoadVariable(buffer, invM_cuts[it->first][PROMPT], EDMultiX);
+		hist_name = new char[50];
+		strcpy(hist_name, buffer);
+		TA2DataManager::LoadVariable(hist_name, invM_cuts[it->first][PROMPT], EDMultiX);
 		sprintf(buffer, "missM_%s_prompt", it->second);
 		if (dbg)
 			printf("Load cut variable %02d %s\n", it->first, buffer);
-		TA2DataManager::LoadVariable(buffer, missM_cuts[it->first][PROMPT], EDMultiX);
+		hist_name = new char[50];
+		strcpy(hist_name, buffer);
+		TA2DataManager::LoadVariable(hist_name, missM_cuts[it->first][PROMPT], EDMultiX);
 	}
 	/*TA2DataManager::LoadVariable("invM_protE_prompt", invM_cuts[protE][PROMPT], EDMultiX);
 	TA2DataManager::LoadVariable("invM_copl_prompt", invM_cuts[copl][PROMPT], EDMultiX);
@@ -288,11 +293,15 @@ void TA2SaschaPhysics::LoadVariable()
 		sprintf(buffer, "invM_%s_random", it->second);
 		if (dbg)
 			printf("Load cut variable %02d %s\n", it->first, buffer);
-		TA2DataManager::LoadVariable(buffer, invM_cuts[it->first][RANDOM], EDMultiX);
+		hist_name = new char[50];
+		strcpy(hist_name, buffer);
+		TA2DataManager::LoadVariable(hist_name, invM_cuts[it->first][RANDOM], EDMultiX);
 		sprintf(buffer, "missM_%s_random", it->second);
 		if (dbg)
 			printf("Load cut variable %02d %s\n", it->first, buffer);
-		TA2DataManager::LoadVariable(buffer, missM_cuts[it->first][RANDOM], EDMultiX);
+		hist_name = new char[50];
+		strcpy(hist_name, buffer);
+		TA2DataManager::LoadVariable(hist_name, missM_cuts[it->first][RANDOM], EDMultiX);
 	}
 	/*TA2DataManager::LoadVariable("invM_protE_random", invM_cuts[protE][RANDOM], EDMultiX);
 	TA2DataManager::LoadVariable("invM_copl_random", invM_cuts[copl][RANDOM], EDMultiX);
