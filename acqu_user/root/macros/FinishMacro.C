@@ -32,7 +32,7 @@ void saveAnalysis()
 	//getchar();  // wait for keyboard input
 }
 
-void FinishMacro(Char_t* file = ARHistograms.root)
+void FinishMacro(Char_t* file = "ARHistograms.root")
 {
 	printf("\nEnd-of-Run macro executing:\n");
 	TFile f(file, "recreate");
