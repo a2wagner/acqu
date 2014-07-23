@@ -7,12 +7,13 @@
 
 #include "TA2SaschaPhysics.h"
 
-enum { EPromptWindows = 1000, ERandomWindows, ESpeedInfo, EDebug};
+enum { EPromptWindows = 1000, ERandomWindows, ESpeedInfo, EBalanceCut, EDebug};
 
 static const Map_t kPhysics[] = {
 	{"Prompt:", EPromptWindows},
 	{"Random:", ERandomWindows},
 	{"SpeedInfo:", ESpeedInfo},
+	{"BalanceCut:", EBalanceCut},
 	{"Debug:", EDebug},
 	{NULL, -1}
 };
@@ -138,6 +139,9 @@ TA2SaschaPhysics::~TA2SaschaPhysics()
 
 void TA2SaschaPhysics::SetConfig(Char_t* line, Int_t key)
 {
+	char file_path[128];
+	char cut_name[64];
+
 	/* read prompt and random window times */
 	switch (key) {
 	case EPromptWindows:
@@ -157,6 +161,27 @@ void TA2SaschaPhysics::SetConfig(Char_t* line, Int_t key)
 	case ESpeedInfo:
 		speed_info = true;
 		std::cout << "Analysis speed information will be printed" << std::endl;
+		break;
+	case EBalanceCut:
+		if (sscanf(line, "%s %s\n", file_path, cut_name) != 2) {
+			PrintError(line, "<Error: Cut file not read!>");
+			return;
+		} else {
+			TFile cutFile(file_path, "READ");
+			if (!cutFile.IsOpen()) {
+				printf("Error opening cut file %s\n", file_path);
+				exit(1);
+			}
+			cutBalance = (TCutG*)cutFile.Get(cut_name);
+			// using cutBalance not as a pointer seems to no longer work, will lead to a crash when not used as TCutG balance = ... ?
+			//cutBalance = *(TCutG*)cutFile.Get("balanceCut");
+			cutFile.Close();
+			if (!cutBalance) {
+				printf("Couldn't get cut %s from file!\n", cut_name);
+				exit(1);
+			} else
+				printf("Successfully loaded cut %s from file %s\n", cutBalance->GetName(), basename(file_path));
+		}
 		break;
 	case EDebug:
 		dbg = true;
@@ -448,16 +473,6 @@ void TA2SaschaPhysics::PostInit()
 	}
 
 	KinFit = new TA2CBKinematicFitter(3, 1, 0);
-
-	TFile cutFile("/home/wagners/acqu/acqu_user/data/myCuts.root", "READ");
-	if (!cutFile.IsOpen()) {
-		printf("Error opening the file containing the cuts!\n");
-		exit(1);
-	}
-	cutBalance = (TCutG*)cutFile.Get("balanceCut");
-	// using cutBalance not as a pointer seems to no longer work, will lead to a crash when not used as TCutG balance = ... ?
-	//cutBalance = *(TCutG*)cutFile.Get("balanceCut");
-	cutFile.Close();
 
 	// just for testing
 	//timeTagger now works, so this is obsolete

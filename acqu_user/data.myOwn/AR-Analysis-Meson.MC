@@ -7,7 +7,8 @@ Reconstruct:
 # CaLib configuration
 #
 # General:      dbhost                  dbname   dbuser      dbpass        calibration
-Use-CaLib:      a2calib.online.a2.kph   calib    calib       basel10       CaLib_ETAP_Aug_12
+Use-CaLib:      a2calib.online.a2.kph   CaLib_calib    calib       basel10       ETAP_Aug_12
+#Use-CaLib:      a2calib.online.a2.kph   2004_01-2012_08    calib       basel10       2012_08_EtaP_Ott
 #
 # miscellaneous calibrations    # target position  (0=off/1=on)
 Use-CaLib-Misc:                 0
@@ -102,6 +103,12 @@ Display: 1D promptRandomRatio 1000 0. 1.
 #
 # Display speed information of the analysis
 SpeedInfo:
+#
+#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#
+# File to read TCutG from used for energy and momentum balance cut
+#           path to file                                   cut name
+BalanceCut: /home/wagners/acqu/acqu_user/data/myCuts.root  balanceCut
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
