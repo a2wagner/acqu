@@ -5,23 +5,6 @@
 #include "TA2KFParticle.h"
 #include "TA2CBKinematicFitter.h"
 
-// some general constants
-#define N_FINAL_STATE 3
-#define MASS_ETAPRIME 957.78
-#define MASS_PROTON 938.272
-#define MASS_ETA 547.862
-#define MASS_PIZERO 134.9766
-#define R2D TMath::RadToDeg()
-
-// for examining spectra in degree-steps
-#define MAX_STEPS 20
-
-// number of prompt and random windows
-#define N_WINDOWS 2//3
-// at the moment I only use one random array, for this define PROMPT and RANDOM
-#define PROMPT 0
-#define RANDOM 1
-
 class TA2Apparatus;
 
 class TA2SaschaPhysics : public TA2BasePhysics
@@ -31,6 +14,21 @@ class TA2SaschaPhysics : public TA2BasePhysics
 	typedef std::map<int, const char*>::iterator ICIter;
 
   protected:
+	// some general constants
+	static const int N_FINAL_STATE = 3;
+	static const double MASS_ETAPRIME = 957.78;
+	static const double MASS_PROTON = 938.272;
+	static const double MASS_ETA = 547.862;
+	static const double MASS_PIZERO = 134.9766;
+	static const double R2D = 180./3.14159265359;
+	// for examining spectra in degree-steps
+	static const int MAX_STEPS = 20;
+	// number of prompt and random windows
+	static const int N_WINDOWS = 2;//3
+	// at the moment I only use one random array, for this define PROMPT and RANDOM
+	static const int PROMPT = 0;
+	static const int RANDOM = 1;
+
 	// enum for numbering of different cuts and cut combinations
 	enum cuts {
 		protE,
