@@ -29,6 +29,7 @@
 #pragma link C++ class TA2Pi0Compton+;
 #pragma link C++ class TA2SaschaPhysics+;
 #pragma link C++ class TA2OnlinePhysics+;
+#pragma link C++ class TA2TestPhysics+;
 #pragma link C++ class TA2UserPhysics+;
 #pragma link C++ class TA2MesonPhysics+;
 #pragma link C++ class TA2AccessSQL+;
