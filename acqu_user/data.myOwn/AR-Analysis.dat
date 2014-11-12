@@ -61,6 +61,7 @@ Reconstruct-Analysis:
 ##                 	Name    Class               Configuration File
 Physics-Analysis:   PHYS    TA2SaschaPhysics    AR-Analysis-Meson.MC
 #Physics-Analysis:   GoAT    TA2GoAT             AR-Analysis-GoAT.dat
+#Physics-Analysis:   Online  TA2OnlinePhysics    AR-Analysis-Online.dat
 ##
 ## Do some post initialisation...usually necessary
 Initialise:

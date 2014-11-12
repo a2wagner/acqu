@@ -59,7 +59,7 @@ Initialise:
 #        Macro file name  		      Macro funcion
 #Finish:  root/macros/FinishTree.C     FinishTree("ARHistograms_MC.root")
 #Finish:  root/macros/FinishMacro.C    FinishMacro()
-#Finish:  root/macros/FinishMacro.C    saveAnalysis()
+Finish:  root/macros/FinishMacro.C    saveAnalysis()
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
