@@ -449,8 +449,13 @@ void TA2Ladder::ReadDecoded( )
   fNDoubles = 0; 
   Float_t* energy = (Float_t*)(fEvent[EI_beam]);
   Double_t Ee = ((TA2Tagger*)fParent)->GetBeamEnergy() - 1000.0*energy[3];
-  UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
-  if( iHit >= fNelem ) iHit = 0;
+  //UInt_t iHit = TMath::BinarySearch( fNelem, fECalibration, Ee );
+  UInt_t iHit;
+  /*// Prevent segfault if simulated energy is higher than the largest value defined in the config file, which means that the electron energy is lower than the lowest ladder element. BinarySearch will return (UInt_t)EBufferEnd which causes the crash by accessing fEOverlap[iHit]. Use lowest entry in this case for now.
+  if (Ee < fECalibration[0])
+    iHit = 0;
+  else
+    iHit = TMath::BinarySearch(fNelem, fECalibration, Ee);
   //
   //  Double_t El0,Em0,Eh0,dE0, El1,Em1,Eh1,dE1, El2,Em2,Eh2,dE2;
   Double_t El0,Eh0,dE0,Eh1,dE1,El2,dE2;
@@ -495,5 +500,46 @@ void TA2Ladder::ReadDecoded( )
   fWindows[0] = ELaddPrompt;
   fHitsAll[fNhits] = EBufferEnd;
   fHitsRand[0] = EBufferEnd;
+  return;*/
+
+  bool found = false;
+  for(int i=1; i<fNelem-2; i++)
+  {
+    if(Ee > (fECalibration[i]-((fECalibration[i]-fECalibration[i-1])/2)) && Ee <= (fECalibration[i]+((fECalibration[i+1]-fECalibration[i])/2)))
+    {
+        iHit	= i;
+        found	= true;
+        break;
+    }
+  }
+  if(!found)
+  {
+    if(Ee > (fECalibration[0]-((fECalibration[1]-fECalibration[0])/2)) && Ee <= (fECalibration[0]+((fECalibration[1]-fECalibration[0])/2)))
+    {
+        iHit	= 0;
+        found = true;
+    }
+    else if(Ee > (fECalibration[46]-((fECalibration[46]-fECalibration[45])/2)) && Ee <= (fECalibration[46]+((fECalibration[46]-fECalibration[45])/2)))
+    {
+        iHit	= 0;
+        found = true;
+    }
+  }
+  if(found)
+  {
+    //printf("iHit: %d\n", iHit);
+    fHits[fNhits] = iHit;
+    fNhits++;
+    fEelecOR[0] = fECalibration[iHit];
+    fEelecOR[1] = EBufferEnd;
+    fTimeOR[0] = 0.0;
+    fTimeOR[1] = EBufferEnd;
+    fHits[fNhits] = EBufferEnd;
+    return;
+  }
+  //printf("no Hit\n");
+  fEelecOR[0] = EBufferEnd;
+  fTimeOR[1] = EBufferEnd;
+  fHits[fNhits] = EBufferEnd;
   return;
 }
