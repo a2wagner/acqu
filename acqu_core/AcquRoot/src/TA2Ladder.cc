@@ -106,7 +106,7 @@ TA2Ladder::~TA2Ladder()
   if( fMeanEnergy ) delete[] fEnergy;
   if( fMeanEnergyOR ) delete[] fEnergyOR;
   if( fDiffTime ) delete[] fDiffTime;
-  if( fMeanTimeOR ) delete[] fDiffTimeOR;
+  if( fDiffTimeOR ) delete[] fDiffTimeOR;
   if( fTrigg ) delete[] fTrigg;
   if( fHitsAll ) delete[] fHitsAll;
   if( fScalerIndex ) delete[] fScalerIndex;
@@ -132,27 +132,39 @@ void TA2Ladder::LoadVariable(  )
   //           MultiX  for a multi-valued variable
 
   //                            name     	pointer         type-spec
-  TA2DataManager::LoadVariable("HitsRand",   	fHitsRand,      EIMultiX);
-  TA2DataManager::LoadVariable("HitsPrompt",   	fHitsPrompt,    EIMultiX);
-  TA2DataManager::LoadVariable("MuHits",   	fMuHits,        EIMultiX);
+  if(fIsTimeWindows){
+    TA2DataManager::LoadVariable("HitsRand",   	fHitsRand,      EIMultiX);
+    TA2DataManager::LoadVariable("HitsPrompt", 	fHitsPrompt,    EIMultiX);
+  }
+  if( fIsMicro ){
+    TA2DataManager::LoadVariable("MuHits",   	fMuHits,        EIMultiX);
+  }
   TA2DataManager::LoadVariable("NhitsPrompt",  	&fNhitsPrompt,  EISingleX);
   TA2DataManager::LoadVariable("NhitsRand",  	&fNhitsRand,    EISingleX);
   TA2DataManager::LoadVariable("NMuHits",  	&fNMuHits,      EISingleX);
-  TA2DataManager::LoadVariable("ScalerCurr", 	fScalerCurr, 	EIScalerX);
-  TA2DataManager::LoadVariable("ScalerAcc",  	fScalerAcc,  	EDScalerX);
-  TA2DataManager::LoadVariable("Doubles",	fDoubles,       EIMultiX);
+  if( fIsScaler ){
+    TA2DataManager::LoadVariable("ScalerCurr", 	fScalerCurr, 	EIScalerX);
+    TA2DataManager::LoadVariable("ScalerAcc",  	fScalerAcc,  	EDScalerX);
+  }
   TA2DataManager::LoadVariable("NDoubles",	&fNDoubles,     EISingleX);
-  TA2DataManager::LoadVariable("Eelect", 	fEelecOR,       EDMultiX);
-  TA2DataManager::LoadVariable("Eelement", 	fEelec,       	EDSingleX);
+  if( fIsECalib ){
+    TA2DataManager::LoadVariable("Eelect", 	fEelecOR,       EDMultiX);
+    TA2DataManager::LoadVariable("Eelement", 	fEelec,       	EDSingleX);
+  }
   TA2DataManager::LoadVariable("Trig", 		fTrigg,       	EIMultiX);
   TA2DataManager::LoadVariable("NTrig",		&fNThits,   	EISingleX);
   TA2DataManager::LoadVariable("Fence",    	&fFence,       	EISingleX);
-  TA2DataManager::LoadVariable("MeanTime",    	fMeanTime,      EDSingleX);
-  TA2DataManager::LoadVariable("MeanTimeOR",   	fMeanTimeOR,    EDMultiX);
-  TA2DataManager::LoadVariable("MeanEnergy",   	fMeanEnergy,    EDSingleX);
-  TA2DataManager::LoadVariable("MeanEnergyOR",  fMeanEnergyOR,  EDMultiX);
-  TA2DataManager::LoadVariable("DiffTime",    	fDiffTime,      EDSingleX);
-  TA2DataManager::LoadVariable("DiffTimeOR",   	fDiffTimeOR,    EDMultiX);
+  if( fIsOverlap && fIsTime ){
+    TA2DataManager::LoadVariable("Doubles",	fDoubles,       EIMultiX);
+    TA2DataManager::LoadVariable("MeanTime",   	fMeanTime,      EDSingleX);
+    TA2DataManager::LoadVariable("MeanTimeOR", 	fMeanTimeOR,    EDMultiX);
+    TA2DataManager::LoadVariable("DiffTime",   	fDiffTime,      EDSingleX);
+    TA2DataManager::LoadVariable("DiffTimeOR", 	fDiffTimeOR,    EDMultiX);
+  }
+  if( fIsOverlap && fIsEnergy ){
+    TA2DataManager::LoadVariable("MeanEnergy", 	fMeanEnergy,    EDSingleX);
+    TA2DataManager::LoadVariable("MeanEnergyOR",fMeanEnergyOR,  EDMultiX);
+  }
   //
   TA2Detector::LoadVariable();
 }

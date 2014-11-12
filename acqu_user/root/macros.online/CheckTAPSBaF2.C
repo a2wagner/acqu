@@ -4,7 +4,19 @@
 // dk - 22th june 04
 // More specrtra...
 
-void CheckTAPSBaF2(){
+TAPSBaF2Clear(){
+	// Does not work properly. (Reset()!)
+	TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("BaF2"));
+	t->ZeroAll();
+}
+
+
+void CheckTAPSBaF2(TCanvas* canv){
+	if(canv==NULL) {
+		TAPSBaF2Clear();
+		return;
+	}
+	
   Char_t* hname[] = {
     "BaF2_ADCHits",
     "BaF2_TDCHits",
@@ -38,7 +50,7 @@ void CheckTAPSBaF2(){
   Char_t* opt2d[] = { "cont0", "colz", "colz", "colz" };
   TH1F* h1;
   TH2F* h2;
-  TCanvas* canv = new TCanvas("TAPS-BaF2-Spectra","TAPS-BaF2-Online",240,180,1240,890);
+
   canv->Divide(3,4);
   for( Int_t i=0; i<8; i++ ){
       h1 = (TH1F*)(gROOT->FindObjectAny(hname[i]));
@@ -72,8 +84,3 @@ void CheckTAPSBaF2(){
   return;
 }
 
-TAPSBaF2Clear(){
-  // Does not work properly. (Reset()!)
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("BaF2"));
-  t->ZeroAll();
-}

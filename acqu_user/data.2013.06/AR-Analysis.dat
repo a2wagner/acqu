@@ -54,6 +54,8 @@ BitPattern:  AR-Analysis-TriggerPat.dat
 ##                  Name      Class                    Setup file
 Apparatus:	    TAGG      TA2Tagger		       AR-Analysis-Tagger.dat
 Apparatus:	    CB	      TA2CentralApparatus      AR-Analysis-CB.dat
+Apparatus:          LINPOL    TA2LinearPolEpics        AR-Analysis-LinPol_FromFiles.dat
+#Apparatus:          LINPOL    TA2LinearPolEpics        AR-Analysis-LinPol.dat
 Apparatus:	    TAPS      TA2Taps		       AR-Analysis-TAPS.dat
 ##
 ## Turn on apparatus-level reconstruction
@@ -71,7 +73,7 @@ Initialise:
 ## The procedures are usually held in macro script files
 ## Period...every N events
 ##        N         Macro File          Macro Procedure
-Period:	  100000    PeriodMacro.C	PeriodMacro()
+#Period:	  100000    PeriodMacro.C	PeriodMacro()
 #Epics:	  EpicsHistograms.C		DumpEpicsBuffers("EpicsDump.txt")
 ##
 ## EndFile...each time an input data file is closed

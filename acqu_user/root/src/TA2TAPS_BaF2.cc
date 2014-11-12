@@ -45,6 +45,8 @@ ClassImp(TA2TAPS_BaF2)
 TA2TAPS_BaF2::TA2TAPS_BaF2(const char* name, TA2System* apparatus)
              :TA2ClusterDetector(name, apparatus)
 {
+  fType = ENoType;	
+	
   fUseEnergyResolution    = 0;
   fUseTimeResolution      = 0;
   fEnergyResolutionFactor = -1.0;
@@ -193,6 +195,23 @@ void TA2TAPS_BaF2::PostInit()
   // Some further initialisation after all setup parameters read in
   // Start with alignment offsets
   // Create space for various output arrays
+
+    // init the type
+    switch (GetNelement())
+    {
+        case 384:
+            fType = EBaF2;
+            break;
+        case 402:
+            fType = EBaF2_PWO_08;
+            break;
+        case 438:
+            fType = EBaF2_PWO_09;
+            break;
+        default:
+            fType = ENoType;
+            break;
+    }
 
   pRandoms = new TRandom3;
   pRandoms->SetSeed(0); //'Randomize Timer'

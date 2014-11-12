@@ -64,6 +64,8 @@
 #include "MultiADC_t.h"                // multi-hit ADC handler
 #include "TA2RingBuffer.h"             // data buffer class
 
+#include <string>
+
 // Types raw-data tree branch
 enum { EARHitBr, EARScalerBr, EARHeaderBr };
 // Types of data processing
@@ -145,6 +147,8 @@ private:
   Bool_t fIsLocalDAQ;           // local DAQ thread?
   Bool_t fIsMk2Format;          // flag Mk2 data format
   Bool_t fIsPrintError;         // flag printout of hardware errors
+  Bool_t fUseDirectIO;         // use direct FileIO for reading
+  
 
   //For EPICS buffers
   Int_t fNEpics;                        //No of different epics event types
@@ -172,6 +176,9 @@ public:
    void Run( );
    void Start( );
    void DataLoop();
+   void DataLoopDirectIO();   
+   Bool_t DataLoopDirectIOWorker(const std::string& filename, UInt_t start, UInt_t stop);
+   Bool_t DataLoopDirectIOWorkerXZ(const std::string& filename, UInt_t start, UInt_t stop);   
    void OfflineLoop();
    void Clear( );
    void Reset( );
@@ -235,6 +242,13 @@ public:
      else
        return((AcquExptInfo_t*)((UInt_t*)fHeaderBuff + 1))->fOutFile;
    }
+   Int_t GetRunNumber(){
+     // ONLINE...access the current run number from the ACQU header record
+     if( fIsMk2Format )
+       return((AcquMk2Info_t*)((UInt_t*)fHeaderBuff + 1))->fRun;
+     else
+       return((AcquExptInfo_t*)((UInt_t*)fHeaderBuff + 1))->fRun;
+   }
    void* GetHeaderBuff(){ return fHeaderBuff; }
    TFile* GetTreeFile(){ return fTreeFile; }
    Char_t** GetTreeFileList(){ return fTreeFileList; }
@@ -261,6 +275,10 @@ public:
    Bool_t* GetEpicsIndex(){ return fEpicsIndex; }
    Int_t   GetNEpics(){ return fNEpics; }
    
+   void SetNTreeFiles(Int_t i){ fNTreeFiles = i; }
+   void SetTreeDir(Char_t* dir){ fTreeDir = dir; }
+   void SetBatchDir(Char_t *dir){ fBatchDir = dir; }
+
    void SetIsOnline(){ fIsOnline = ETrue; }
    void SetRecLen( Int_t len ){ fRecLen = len; }
    void SetMulti(MultiADC_t** multi){ fMulti = multi; }
@@ -273,7 +291,8 @@ public:
    Bool_t IsBatch(){ return fIsBatch; }
    Bool_t IsLocalDAQ(){ return fIsLocalDAQ; }
    Bool_t IsPrintError(){ return fIsPrintError; }
-  
+   Bool_t UseDirectIO() { return fUseDirectIO; }
+   
    void PrintTree(){ if( fTree ) fTree->Print(); }
 
    ClassDef(TAcquRoot,1)   

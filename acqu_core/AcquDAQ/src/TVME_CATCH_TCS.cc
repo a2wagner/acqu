@@ -234,6 +234,22 @@ Bool_t* TVME_CATCH_TCS::FillBuffer(Char_t* name, Int_t* length)
 }
 
 //-------------------------------------------------------------------------
+void TVME_CATCH_TCS::SetRunMode(UInt_t runmode)
+{
+  // note that only the bit0 should be changed,
+  // but ReConfig() sets 0x24 to 0x101, so we stick to this! 
+  // note that the TCS controller only reacts on this
+  // bit when an End-of-Spill / Begin-of-Spill procedure is
+  // executed, this can be done by ResetTrigCtrl() by the VUPROM
+  if(runmode == 0x0) {
+    WrtCatch(0x24, 0x100);
+  }
+  else if(runmode == 0x1) {
+    WrtCatch(0x24, 0x101);
+  }
+}
+
+//-------------------------------------------------------------------------
 void TVME_CATCH_TCS::ReConfig( )
 {
   // Run the re-synchronisation procedure
@@ -305,6 +321,7 @@ void TVME_CATCH_TCS::ReConfig( )
   WrtCatch(0xA4, 0x640);
   // start run: only MainDAQ
   WrtCatch(0x44, 0xfffff);
+  // see also SetRunMode when changing this value!
   WrtCatch(0x24, 0x101);
   return;
 }

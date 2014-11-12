@@ -47,6 +47,8 @@
 
 #include <time.h>
 
+#include <sstream>
+
 ClassImp(TDAQsupervise)
 
 // Modes of entering control info to DAQ
@@ -78,6 +80,7 @@ static Map_t kSuperviseKeys[] = {
   {"NoAuto:",        ESupNoAuto},
   {"IsRunning:",     ESupIsRunning},
   {"ConfigTCS:",     ESupConfigTCS},
+  {"SetTCSRunMode:", ESupSetTCSRunMode},  
   {"Camio:",         ESupCAMAC},
   {"VUPROM:",        ESupVUPROM},
   {"V874:",          ESupV874},
@@ -212,6 +215,18 @@ void TDAQsupervise::SetConfig( Char_t* line, Int_t key )
   case ESupConfigTCS:
     // Re-configure TCS
     ConfigTCS();
+    break;
+  case ESupSetTCSRunMode:
+    // Set the RunMode bit of the TCS controller
+    // 1=enabled (default), 0=disabled
+    // note that the TCS controller only reacts on this
+    // bit when an End-of-Spill / Begin-of-Spill procedure is
+    // executed, this can be done by ResetTrigCtrl() by the VUPROM
+    if( strlen( line ) ){
+      sscanf(line, "%d", &temp);
+      temp &= 0x1; // only one bit is interesting
+      SetTCSRunMode(temp);
+    }
     break;
   case ESupCAMAC:
     // Issue CAMAC CNAF
@@ -696,7 +711,7 @@ void TDAQsupervise::GetSysTime()
   time_t tick = time(NULL);			// # sec. since 1/1/70
   strcpy( fTime, asctime( localtime(&tick) ) );
   sprintf( fCommandLine,"Superviser system time: %s", fTime );
-  fprintf( fLogStream, fCommandLine );
+  fputs( fCommandLine, fLogStream );
   //  PutString( fCommandLine );
   return;
 }
@@ -889,6 +904,31 @@ void TDAQsupervise::ConfigTCS()
     if( mod->InheritsFrom("TVME_CATCH_TCS") ){
       ((TVME_CATCH_TCS*)mod)->ReConfig();
       PutString(" TCS reconfigured\n");         // output message
+      return;
+    }
+  }
+  PutString(" No TCS Module found\n");         // output message
+  return;
+}
+
+//----------------------------------------------------------------------------
+void TDAQsupervise::SetTCSRunMode(UInt_t runmode)
+{
+  // Run the re-configuration procedure of the Trigger Control System
+  // if it exists
+  TList* modList = fEXP->GetModuleList();
+  TDAQmodule* mod;
+  if( !modList ){
+    PutString(" No list of experimental modules found\n");
+    return;
+  }
+  TIter nextM( modList );
+  while( (mod = (TDAQmodule*)nextM()) ){
+    if( mod->InheritsFrom("TVME_CATCH_TCS") ){
+      ((TVME_CATCH_TCS*)mod)->SetRunMode(runmode);
+      stringstream ss;
+      ss << " Set TCS runmode to " << runmode << endl;
+      PutString(ss.str().c_str());         // output message
       return;
     }
   }

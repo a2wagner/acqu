@@ -6,6 +6,7 @@ TA2GoAT::TA2GoAT(const char* Name, TA2Analysis* Analysis) : TA2AccessSQL(Name, A
                                                                     file(0),
                                                                     treeRawEvent(0),
                                                                     treeTagger(0),
+                                                                    treeLinPol(0),
                                                                     treeTrigger(0),
                                                                     treeDetectorHits(0),
                                                                     treeScaler(0),
@@ -15,6 +16,8 @@ TA2GoAT::TA2GoAT(const char* Name, TA2Analysis* Analysis) : TA2AccessSQL(Name, A
 																	Phi(0),
                                                                     time(0),
                                                                     clusterSize(0),
+                                                                    centralCrys(0),
+                                                                    centralVeto(0),
                                                                     Apparatus(0),
                                                                     d_E(0),
                                                                     WC0_E(0),
@@ -26,20 +29,29 @@ TA2GoAT::TA2GoAT(const char* Name, TA2Analysis* Analysis) : TA2AccessSQL(Name, A
                                                                     photonbeam_E(0),
                                                                     tagged_ch(0),
                                                                     tagged_t(0),
+                                                                    plane(0),
+                                                                    edge(0),
+                                                                    edgeSetting(0),
                                                                     nNaI_Hits(0),
                                                                     NaI_Hits(0),
+                                                                    NaI_Cluster(0),
                                                                     nPID_Hits(0),
                                                                     PID_Hits(0),
                                                                     nWC_Hits(0),
 																	WC_Hits(0),
 																	nBaF2_PbWO4_Hits(0),
 																	BaF2_PbWO4_Hits(0),
+																	BaF2_PbWO4_Cluster(0),
                                                                     nVeto_Hits(0),
                                                                     Veto_Hits(0),
                                                                     ESum(0),
                                                                     Mult(0),
-                                                                    nHelBits(0),
+                                                                    nTriggerPattern(0),
 																	TriggerPattern(0),
+                                                                    nHelBits(0),	
+                                                                    Helicity(0),
+                                                                    HelInver(0),
+                                                                    HelADC(0),															
                                                                     nError(0),
                                                                     ErrModID(0),
                                                                     ErrModIndex(0),
@@ -47,7 +59,8 @@ TA2GoAT::TA2GoAT(const char* Name, TA2Analysis* Analysis) : TA2AccessSQL(Name, A
                                                                     eventNumber(0),
                                                                     eventID(0)														
 {
-    	strcpy(outputFolder,"~");
+    	strcpy(outputFolder,"");
+    	strcpy(inputName,"");
     	strcpy(fileName,"Acqu");
 
     	AddCmdList(RootTreeConfigKeys);
@@ -60,6 +73,8 @@ TA2GoAT::~TA2GoAT()
 		delete treeRawEvent;
 	if(treeTagger)
 		delete treeTagger;
+	if(treeLinPol)
+		delete treeLinPol;		
 	if(treeTrigger)
 		delete treeTrigger;
 	if(treeDetectorHits)
@@ -82,7 +97,7 @@ void    TA2GoAT::LoadVariable()
 	TA2DataManager::LoadVariable("time", 		time,		EDMultiX);
 
 	TA2DataManager::LoadVariable("nTagged", 	&nTagged,	EISingleX);
-	TA2DataManager::LoadVariable("photonbeam_E",photonbeam_E,EDMultiX);
+	TA2DataManager::LoadVariable("photonbeamE",     photonbeam_E,   EDMultiX);
 	TA2DataManager::LoadVariable("taggedCh", 	tagged_ch,	EIMultiX);
 	TA2DataManager::LoadVariable("taggedT", 	tagged_t,	EDMultiX);    
 
@@ -105,6 +120,12 @@ void    TA2GoAT::SetConfig(Char_t* line, Int_t key)
      	   while(outputFolder[strlen(outputFolder)-1]=='\n' 
 						|| outputFolder[strlen(outputFolder)-1]=='\r')
 			outputFolder[strlen(outputFolder)-1]='\0';
+        return;
+    	case EG_INPUT_NAME:
+        	strcpy(inputName,line);
+        	while(inputName[strlen(inputName)-1]=='\n' 
+						|| inputName[strlen(inputName)-1]=='\r')
+			inputName[strlen(inputName)-1]='\0';
         return;
     	case EG_FILE_NAME:
         	strcpy(fileName,line);
@@ -137,13 +158,14 @@ void    TA2GoAT::SetConfig(Char_t* line, Int_t key)
 
 void    TA2GoAT::PostInit()
 {
-
    	Ek		= new Double_t[TA2GoAT_MAX_PARTICLE];
    	Theta		= new Double_t[TA2GoAT_MAX_PARTICLE];
    	Phi		= new Double_t[TA2GoAT_MAX_PARTICLE];
    	time		= new Double_t[TA2GoAT_MAX_PARTICLE];
    	clusterSize = new UChar_t[TA2GoAT_MAX_PARTICLE];
-    
+   	centralCrys  = new Int_t[TA2GoAT_MAX_PARTICLE];
+	centralVeto = new Int_t[TA2GoAT_MAX_PARTICLE];
+	
    	photonbeam_E= new Double_t[TA2GoAT_MAX_TAGGER];
    	tagged_ch	= new Int_t[TA2GoAT_MAX_TAGGER];
    	tagged_t	= new Double_t[TA2GoAT_MAX_TAGGER];
@@ -158,16 +180,21 @@ void    TA2GoAT::PostInit()
    	WC_Vertex_Z 	= new Double_t[TA2GoAT_MAX_PARTICLE];
     
    	NaI_Hits	= new Int_t[TA2GoAT_MAX_HITS];  
-   	PID_Hits	= new Int_t[TA2GoAT_MAX_HITS];
+    	NaI_Cluster	= new Int_t[TA2GoAT_MAX_HITS];  
+  	PID_Hits	= new Int_t[TA2GoAT_MAX_HITS];
    	WC_Hits		= new Int_t[TA2GoAT_MAX_HITS];
    	BaF2_PbWO4_Hits	= new Int_t[TA2GoAT_MAX_HITS];
+   	BaF2_PbWO4_Cluster	= new Int_t[TA2GoAT_MAX_HITS];  
    	Veto_Hits	= new Int_t[TA2GoAT_MAX_HITS];
     
    	TriggerPattern = new Int_t[32];
 
-    ErrModID 	= new Int_t[TA2GoAT_MAX_ERROR];
+        ErrModID 	= new Int_t[TA2GoAT_MAX_ERROR];
    	ErrModIndex 	= new Int_t[TA2GoAT_MAX_ERROR];
    	ErrCode 	= new Int_t[TA2GoAT_MAX_ERROR];
+
+	// Default SQL-physics initialisation
+        TA2AccessSQL::PostInit();
 
    	printf("---------\n");
    	printf("Init Tree\n");
@@ -178,25 +205,17 @@ void    TA2GoAT::PostInit()
    	if(gAR->GetProcessType() == EMCProcess) fullName = gAR->GetTreeFileList(0);        
    	else  fullName = gAR->GetFileName();
 		
-	int length = fullName.Length();
-	int last = 0;
-	for (int i = 0; i < length; i++)
-	{
-		int index = fullName.Index("/"); 
-		fullName.Remove(0,index+1);	
-		if (index == -1) break;
-		last += index+1; 
-	}
-	Char_t inFile[256], str[256];
-    	if(gAR->GetProcessType() == EMCProcess) 
-		sscanf( gAR->GetTreeFileList(0)+last, "%[^.].root\n", inFile);       
-    	else    
-		sscanf( gAR->GetFileName()+last, "%[^.].dat\n", inFile);	
+	while(fullName.Contains("/")) fullName.Remove(0,1+fullName.Index("/"));
+	fullName.ReplaceAll(".dat",".root");
+	if(strlen(inputName) && fullName.BeginsWith(inputName)) fullName.Remove(0,strlen(inputName));
+	else fullName.Prepend("_");
+	fullName.Prepend(fileName);
+	if(!strcmp(outputFolder,"")) strcpy(outputFolder, gAR->GetTreeDir());
+	if(strcmp(outputFolder+strlen(outputFolder)-1,"/")) strcat(outputFolder, "/");
+	fullName.Prepend(outputFolder);
+   	printf("Root file saved to %s\n", fullName.Data());  
 
-    	sprintf(str, "%s/%s_%s.root", outputFolder, fileName, inFile);        
-   	printf("Root file saved to %s\n", str);  
-
-   	file		= new TFile(str,"RECREATE");
+   	file		= new TFile(fullName.Data(),"RECREATE");
 	treeRawEvent	= new TTree("treeRawEvent", "treeRawEvent");
 	treeTagger	= new TTree("treeTagger","treeTagger");
 	treeTrigger	= new TTree("treeTrigger","treeTrigger");
@@ -208,6 +227,8 @@ void    TA2GoAT::PostInit()
 	treeRawEvent->Branch("Phi",  Phi,  "Phi[nParticles]/D");	
 	treeRawEvent->Branch("time", time, "time[nParticles]/D");
 	treeRawEvent->Branch("clusterSize", clusterSize, "clusterSize[nParticles]/b");
+	treeRawEvent->Branch("centralCrys", centralCrys, "centralCrys[nParticles]/I");
+	treeRawEvent->Branch("centralVeto", centralVeto, "centralVeto[nParticles]/I");
 	treeRawEvent->Branch("Apparatus", Apparatus, "Apparatus[nParticles]/b");
 	treeRawEvent->Branch("d_E", d_E, "d_E[nParticles]/D");	
 	treeRawEvent->Branch("WC0_E", WC0_E, "WC0_E[nParticles]/D");	
@@ -233,12 +254,14 @@ void    TA2GoAT::PostInit()
 	
 	treeDetectorHits->Branch("nNaI_Hits", &nNaI_Hits, "nNaI_Hits/I");
 	treeDetectorHits->Branch("NaI_Hits", NaI_Hits, "NaI_Hits[nNaI_Hits]/I");
+	treeDetectorHits->Branch("NaI_Cluster", NaI_Cluster, "NaI_Cluster[nNaI_Hits]/I");
 	treeDetectorHits->Branch("nPID_Hits", &nPID_Hits, "nPID_Hits/I");
 	treeDetectorHits->Branch("PID_Hits", PID_Hits, "PID_Hits[nPID_Hits]/I");
 	treeDetectorHits->Branch("nWC_Hits", &nWC_Hits, "nWC_Hits/I");
 	treeDetectorHits->Branch("WC_Hits", WC_Hits, "WC_Hits[nWC_Hits]/I");	
 	treeDetectorHits->Branch("nBaF2_PbWO4_Hits", &nBaF2_PbWO4_Hits, "nBaF2_PbWO4_Hits/I");
 	treeDetectorHits->Branch("BaF2_PbWO4_Hits", BaF2_PbWO4_Hits, "BaF2_PbWO4_Hits[nBaF2_PbWO4_Hits]/I");
+	treeDetectorHits->Branch("BaF2_PbWO4_Cluster", BaF2_PbWO4_Cluster, "BaF2_PbWO4_Cluster[nBaF2_PbWO4_Hits]/I");
 	treeDetectorHits->Branch("nVeto_Hits", &nVeto_Hits, "nVeto_Hits/I");
 	treeDetectorHits->Branch("Veto_Hits", Veto_Hits, "Veto_Hits[nVeto_Hits]/I");
 
@@ -249,8 +272,20 @@ void    TA2GoAT::PostInit()
 		treeScaler->Branch("eventNumber", &eventNumber, "eventNumber/I");
 		treeScaler->Branch("eventID", &eventID, "eventID/I");
 		printf("GetMaxScaler: %d\n", GetMaxScaler());
+	        Char_t str[256];
 		sprintf(str, "Scaler[%d]/i", GetMaxScaler());
 		treeScaler->Branch("Scaler", fScaler, str);
+
+		// Store Lin Pol if class is active
+		if(fLinPol)
+		{
+			treeLinPol = new TTree("treeLinPol", "treeLinPol");		
+			treeLinPol->Branch("plane", &plane, "plane/I");
+			treeLinPol->Branch("edge", &edge, "edge/D");
+			treeLinPol->Branch("edgeSetting", &edgeSetting, "edgeSetting/D");
+			treeLinPol->Branch("polTable", fLinPol->GetPolTable_TC(), "polTable[352]/D");
+			treeLinPol->Branch("enhTable", fLinPol->GetEnhTable_TC(), "enhTable[352]/D");
+		}
 	}
 
 	// Define Histograms which will be saved to root tree
@@ -259,9 +294,10 @@ void    TA2GoAT::PostInit()
 	gROOT->cd();
 	
 	eventNumber	= 0;
-	
-	// Default SQL-physics initialisation
-    	TA2AccessSQL::PostInit();	
+
+   	printf("---------\n");
+   	printf("Running\n");
+   	printf("---------\n");	
 
 }
 
@@ -274,37 +310,53 @@ void    TA2GoAT::Reconstruct()
 	if((gAR->IsScalerRead()) && (gAR->GetProcessType() != EMCProcess))
 	{
 		eventID	= gAN->GetNDAQEvent();
-		treeScaler->Fill();		
+		if(treeScaler) treeScaler->Fill();		
+		
+		if(fLinPol)
+		{
+			plane 	= fLinPol->GetPolPlane();
+			edge 	= fLinPol->GetEdge();
+			edgeSetting = fLinPol->GetEdgeSetting();
+			if(treeLinPol) treeLinPol->Fill();
+		}
 	}
 
+	nTagged = 0;
 	if(fTagger && fLadder)
 	{
-        // Get the conversion of tagger channel to photon energy
-	Double_t electron_E = fTagger->GetBeamEnergy();
-        const Double_t* ChToE = fLadder->GetECalibration();		
-		
-		// Collect Tagger M0 Hits
-		nTagged	= fLadder->GetNhits();
-		for(int i=0; i<nTagged; i++)
+                // Get the conversion of tagger channel to photon energy
+	        Double_t electron_E = fTagger->GetBeamEnergy();
+                const Double_t* ChToE = fLadder->GetECalibration();
+	        Int_t fNmult = 1;
+	        if ( gAR->IsOnline() ) fNmult = fLadder->GetNMultihit();
+
+		if ( fNmult <= 1 )
 		{
-			tagged_ch[i]	= fLadder->GetHits(i);
-			tagged_t[i]		= (fLadder->GetTimeOR())[i];
-			photonbeam_E[i] = electron_E - ChToE[tagged_ch[i]];
+        		// Collect Tagger Hits without Multihits
+        		nTagged	= fLadder->GetNhits();
+        		for(int i=0; i<nTagged; i++)
+        		{
+        			tagged_ch[i]	= fLadder->GetHits(i);
+        			tagged_t[i]	= (fLadder->GetTimeOR())[i];
+        			photonbeam_E[i] = electron_E - ChToE[tagged_ch[i]];
+	        	}
 		}
-	
-		// Collect Tagger M+ Hits
-		for(int m=1; m<fLadder->GetNMultihit(); m++)
+		
+		else
 		{
-			for(int i=0; i<fLadder->GetNhitsM(m); i++)
-			{
-				tagged_ch[nTagged+i] 	= (fLadder->GetHitsM(m))[i];
-				tagged_t[nTagged+i]	 	= (fLadder->GetTimeORM(m))[i];
-				photonbeam_E[nTagged+i] = electron_E - ChToE[tagged_ch[nTagged+i]];
-			}
-			nTagged	+= fLadder->GetNhitsM(m);
+        		// Collect Tagger Hits with Multihits
+        		for(UInt_t m=0; m<(UInt_t)fNmult; m++)
+        		{
+        			for(UInt_t i=0; i<fLadder->GetNhitsM(m); i++)
+        			{
+        				tagged_ch[nTagged+i] 	= (fLadder->GetHitsM(m))[i];
+        				tagged_t[nTagged+i]	= (fLadder->GetTimeORM(m))[i];
+        				photonbeam_E[nTagged+i] = electron_E - ChToE[tagged_ch[nTagged+i]];
+        			}
+        			nTagged	+= fLadder->GetNhitsM(m);
+	        	}
 		}
 	}
-	else nTagged = 0;
 	
 	// Gather particle information
 	nParticles = 0;
@@ -344,6 +396,12 @@ void    TA2GoAT::Reconstruct()
 			if(TMath::Abs(part.GetPsVertex().Z()) >= TA2GoAT_NULL) WC_Vertex_Z[i] = 0.0;
 			else WC_Vertex_Z[i]  = part.GetPsVertex().Z();				
 			
+			if(part.GetCentralIndex() == ENullHit) centralCrys[i] = -1;
+			else centralCrys[i] = part.GetCentralIndex();
+						
+			if(part.GetVetoIndex() == ENullHit) centralVeto[i] = -1;
+			else centralVeto[i]	= part.GetVetoIndex();		
+			
 			// Store other values which don't have this "no-value" option
 			Apparatus[i]	= (UChar_t)EAppCB;
 			Theta[i]		= part.GetThetaDg();
@@ -372,13 +430,19 @@ void    TA2GoAT::Reconstruct()
 			
 			if(TMath::Abs(part.GetVetoEnergy()) >= TA2GoAT_NULL) d_E[nParticles+i] = 0.0;
 			else d_E[nParticles+i]	= part.GetVetoEnergy();
+		
+			if(part.GetCentralIndex() == ENullHit) centralCrys[nParticles+i] = -1;
+			else centralCrys[nParticles+i]	= part.GetCentralIndex();
+			
+			if(part.GetVetoIndex() == ENullHit) centralVeto[nParticles+i] = -1;
+			else centralVeto[nParticles+i]	= part.GetVetoIndex();		
 			
 			// Set WC values to NULL
 			WC0_E[nParticles+i] = 0.0;
 			WC1_E[nParticles+i] = 0.0;
 			WC_Vertex_X[nParticles+i] = 0.0;
 			WC_Vertex_Y[nParticles+i] = 0.0;
-			WC_Vertex_Z[nParticles+i] = 0.0;
+			WC_Vertex_Z[nParticles+i] = 0.0;	
 			
 			// Store other values which don't have this "no-value" option
 			Apparatus[nParticles+i]		= (UChar_t)EAppTAPS;
@@ -391,12 +455,35 @@ void    TA2GoAT::Reconstruct()
 		nParticles += fTAPS->GetNParticle(); // update number of particles
 	}
 
+	UInt_t *clhits;
+	HitCluster_t *cl;
+	UInt_t *hits;
+	Int_t clindex[720];
+
 	// Get Detector Hits
 	if(fNaI)
 	{
+	        for(int i=0; i<720; i++)
+		{
+		        clindex[i] = -1;
+		}
+                clhits = fNaI->GetClustHit();
+		for(uint i=0; i<fNaI->GetNCluster(); i++)
+		{
+		        cl = fNaI->GetCluster(clhits[i]);
+			hits = cl->GetHits();
+			for(uint j=0; j<(cl->GetNhits()); j++)
+			{
+			        clindex[hits[j]] = i;
+			}
+		}
+			
 		nNaI_Hits = fNaI->GetNhits();
 		for(int i=0; i<nNaI_Hits; i++)   
-			{ NaI_Hits[i] = fNaI->GetHits(i); }
+		{
+                        NaI_Hits[i] = fNaI->GetHits(i);
+			NaI_Cluster[i] = clindex[NaI_Hits[i]];
+		}
 	}
 
 	if(fPID)
@@ -415,9 +502,27 @@ void    TA2GoAT::Reconstruct()
 
 	if(fBaF2PWO)
 	{
+	        for(int i=0; i<720; i++)
+		{
+		        clindex[i] = -1;
+		}
+                clhits = fBaF2PWO->GetClustHit();
+		for(uint i=0; i<fBaF2PWO->GetNCluster(); i++)
+		{
+		        cl = fBaF2PWO->GetCluster(clhits[i]);
+			hits = cl->GetHits();
+			for(uint j=0; j<(cl->GetNhits()); j++)
+			{
+			        clindex[hits[j]] = i;
+			}
+		}
+			
 		nBaF2_PbWO4_Hits = fBaF2PWO->GetNhits();
 		for(int i=0; i<nBaF2_PbWO4_Hits; i++)
-			{ BaF2_PbWO4_Hits[i] = fBaF2PWO->GetHits(i); }
+		{
+                        BaF2_PbWO4_Hits[i] = fBaF2PWO->GetHits(i);
+			BaF2_PbWO4_Cluster[i] = clindex[BaF2_PbWO4_Hits[i]];
+		}
 	}
 
 	if(fVeto)
@@ -467,6 +572,20 @@ void    TA2GoAT::Reconstruct()
 		}
 	} 
 
+        if(fMulti[400])
+	{
+		int eventIDcheck = fMulti[400]->GetHit(0);
+		for(int i=1; i<23; i++)
+		{
+			if(eventIDcheck != fMulti[400]->GetHit(i))
+			{
+				ErrCode[nError] = 11;
+				nError++;
+				break;
+			}
+		}
+	}
+
 	//Apply EndBuffer
     	Ek[nParticles] 		= EBufferEnd;
     	Theta[nParticles]	= EBufferEnd;
@@ -482,10 +601,10 @@ void    TA2GoAT::Reconstruct()
     tagged_t[nTagged] 	= EBufferEnd;	
 	
 	//Fill Trees
-	treeRawEvent->Fill();
-	treeTagger->Fill();
-	treeTrigger->Fill();
-	treeDetectorHits->Fill();
+	if(treeRawEvent) 		treeRawEvent->Fill();
+	if(treeTagger)			treeTagger->Fill();
+	if(treeTrigger)  		treeTrigger->Fill();
+	if(treeDetectorHits)	treeDetectorHits->Fill();
 
 	//increment event number
 	eventNumber++;	
@@ -607,7 +726,7 @@ void 	TA2GoAT::DataCheckHistograms()
 			if (part.GetVetoEnergy() < 0)  continue;
 			if (part.GetVetoEnergy() > 10) continue;			
 
-			for(int j=0; j<fPID->GetNhits(); j++)
+			for(UInt_t j=0; j<fPID->GetNhits(); j++)
 			{
 				Check_CBdE_E->Fill(part.GetT(),part.GetVetoEnergy());
 				Check_CBPhiCorr->Fill(fPID->GetHits(j),part.GetPhiDg());
@@ -669,7 +788,7 @@ void 	TA2GoAT::DataCheckHistograms()
 			if (part.GetVetoEnergy() < 0)  continue;
 			if (part.GetVetoEnergy() > 10) continue;			
 
-			for(int j=0; j<fVeto->GetNhits(); j++)
+			for(UInt_t j=0; j<fVeto->GetNhits(); j++)
 			{
 				Check_TAPSdE_E->Fill(part.GetT(),part.GetVetoEnergy());
 				Check_TAPSPhiCorr->Fill(fVeto->GetHits(j),part.GetPhiDg());
@@ -686,15 +805,15 @@ void 	TA2GoAT::DataCheckHistograms()
 	// Fill CB stability histograms
 	if(fNaI)
 	{
-		for(int i=0; i<fNaI->GetNhits(); i++)   
+		for(UInt_t i=0; i<fNaI->GetNhits(); i++)   
 				{ Check_CBHits->Fill(eventNumber,fNaI->GetHits(i)); }
 			
 		if (fNaI->IsRawHits())
 		{
-			for (int i=0; i< fNaI->GetNADChits(); i++)
+			for (UInt_t i=0; i< fNaI->GetNADChits(); i++)
 				{ Check_CBADCHits->Fill(eventNumber,fNaI->GetRawEnergyHits()[i]); }	
 				
-			for (int i=0; i< fNaI->GetNTDChits(); i++)
+			for (UInt_t i=0; i< fNaI->GetNTDChits(); i++)
 				{ Check_CBTDCHits->Fill(eventNumber,fNaI->GetRawTimeHits()[i]);	}	
 							
 		}
@@ -703,15 +822,15 @@ void 	TA2GoAT::DataCheckHistograms()
 	// Fill PID stability histograms
 	if(fPID)
 	{
-		for(int i=0; i<fPID->GetNhits(); i++)   
+		for(UInt_t i=0; i<fPID->GetNhits(); i++)   
 				{ Check_PIDHits->Fill(eventNumber,fPID->GetHits(i)); }
 			
 		if (fPID->IsRawHits())
 		{
-			for (int i=0; i< fPID->GetNADChits(); i++)
+			for (UInt_t i=0; i< fPID->GetNADChits(); i++)
 				{ Check_PIDADCHits->Fill(eventNumber,fPID->GetRawEnergyHits()[i]); }	
 				
-			for (int i=0; i< fPID->GetNTDChits(); i++)
+			for (UInt_t i=0; i< fPID->GetNTDChits(); i++)
 				{ Check_PIDTDCHits->Fill(eventNumber,fPID->GetRawTimeHits()[i]);	}	
 							
 		}
@@ -720,17 +839,17 @@ void 	TA2GoAT::DataCheckHistograms()
 	// Fill TAPS stability histograms
 	if(fBaF2PWO)
 	{
-		for(int i=0; i<fBaF2PWO->GetNhits(); i++)   
+		for(UInt_t i=0; i<fBaF2PWO->GetNhits(); i++)   
 				{ Check_TAPSHits->Fill(eventNumber,fBaF2PWO->GetHits(i)); }
 			
 		if (fBaF2PWO->IsRawHits())
 		{
 			if (!(fADC[0] & 1<<15)) // Ignore TAPS Pulser reads
 			{			
-				for (int i=0; i< fBaF2PWO->GetNADChits(); i++)
+				for (UInt_t i=0; i< fBaF2PWO->GetNADChits(); i++)
 					{ Check_TAPSADCHits->Fill(eventNumber,fBaF2PWO->GetRawEnergyHits()[i]); }	
 					
-				for (int i=0; i< fBaF2PWO->GetNTDChits(); i++)
+				for (UInt_t i=0; i< fBaF2PWO->GetNTDChits(); i++)
 					{ Check_TAPSTDCHits->Fill(eventNumber,fBaF2PWO->GetRawTimeHits()[i]);	}	
 			}
 		}
@@ -739,17 +858,17 @@ void 	TA2GoAT::DataCheckHistograms()
 	// Fill PID stability histograms
 	if(fVeto)
 	{
-		for(int i=0; i<fVeto->GetNhits(); i++)   
+		for(UInt_t i=0; i<fVeto->GetNhits(); i++)   
 				{ Check_VetoHits->Fill(eventNumber,fVeto->GetHits(i)); }
 			
 		if (fVeto->IsRawHits())
 		{
 			if (!(fADC[0] & 1<<15)) // Ingore TAPS Pulser reads
 			{
-				for (int i=0; i< fVeto->GetNADChits(); i++)
+				for (UInt_t i=0; i< fVeto->GetNADChits(); i++)
 					{ Check_VetoADCHits->Fill(eventNumber,fVeto->GetRawEnergyHits()[i]); }	
 
-				for (int i=0; i< fVeto->GetNTDChits(); i++)
+				for (UInt_t i=0; i< fVeto->GetNTDChits(); i++)
 					{ Check_VetoTDCHits->Fill(eventNumber,fVeto->GetRawTimeHits()[i]);	}	
 			}			
 		}
@@ -775,6 +894,11 @@ void    TA2GoAT::Finish()
 		treeTagger->Write();	// Write	
 		delete treeTagger; 	// Close and delete in memory
 	}	
+	if(treeLinPol) 
+	{
+		treeLinPol->Write();	// Write	
+		delete treeLinPol; 		// Close and delete in memory
+	}		
 	if(treeTrigger) 
 	{
 		treeTrigger->Write();	// Write	

@@ -1,5 +1,3 @@
-// SVN Info: $Id: TOSUtils.cxx 1433 2012-11-05 17:18:46Z werthm $
-
 /*************************************************************************
  * Author: Dominik Werthmueller, 2008
  *************************************************************************/
@@ -83,7 +81,7 @@ Char_t* TOSUtils::GetOutputString()
 //______________________________________________________________________________
 Int_t TOSUtils::IndexOf(const Char_t* s, Char_t c, UInt_t p)
 {
-    // Returns the position of the first occurence of the character c
+    // Returns the position of the first occurrence of the character c
     // in the string s after position p. Returns -1 if c was not found.
 
     const Char_t* pos = strchr(s+p, (Int_t)c);
@@ -94,7 +92,7 @@ Int_t TOSUtils::IndexOf(const Char_t* s, Char_t c, UInt_t p)
 //______________________________________________________________________________
 Int_t TOSUtils::IndexOf(const Char_t* s1, const Char_t* s2, UInt_t p)
 {
-    // Returns the position of the first occurence of the string s2
+    // Returns the position of the first occurrence of the string s2
     // in the string s1 after position p. Returns -1 if s2 was not found.
 
     const Char_t* pos = strstr(s1+p, s2);
@@ -105,7 +103,7 @@ Int_t TOSUtils::IndexOf(const Char_t* s1, const Char_t* s2, UInt_t p)
 //______________________________________________________________________________
 Int_t TOSUtils::LastIndexOf(const Char_t* s, Char_t c)
 {
-    // Returns the position of the last occurence of the character c
+    // Returns the position of the last occurrence of the character c
     // in the string s. Returns -1 if c was not found.
     
     const Char_t* pos = strrchr(s, (Int_t)c);
@@ -129,7 +127,7 @@ Char_t* TOSUtils::ExtractDirectory(const Char_t* s)
     else 
     {
         strncpy(out, s, pos);
-        out[pos+1] = '\0';
+        out[pos] = '\0';
     }
 
     return out;
@@ -179,6 +177,29 @@ Char_t* TOSUtils::ExtractPureFileName(const Char_t* s)
     }
 
     return out;
+}
+
+//______________________________________________________________________________
+Int_t TOSUtils::ExtractRunNumber(const Char_t* s)
+{
+    // Extract the run number from the string 's' having the pattern "%s_RUN%s",
+    // i.e. CB_RUN.dat or ARHistograms_CB_RUN.root.
+    
+    Char_t tmp[256];
+    
+    // find last underscore 
+    Int_t undersc = TOSUtils::LastIndexOf(s, '_');
+        
+    // gather all digits between underscore and the next other character
+    Int_t l = 1;
+    while (kTRUE)
+    {
+        TString number(s+undersc+1, l);
+        if (!number.IsDigit()) break;
+        strcpy(tmp, number.Data());
+        l++;
+    }
+    return atoi(tmp);
 }
 
 //______________________________________________________________________________
@@ -345,6 +366,34 @@ Char_t* TOSUtils::FormatArrayList(Int_t n, UInt_t* arr, const Char_t* format)
     Char_t fmt[8];
     sprintf(fmt, "%s", format);
      
+    // format list
+    Char_t tmp[512];
+    for (Int_t i = 0; i < n; i++)
+    {
+        sprintf(tmp, fmt, arr[i]);
+        strcat(out, tmp);
+        if (i < n-1) strcat(out, ", ");
+    }
+
+    return out;
+}
+
+//______________________________________________________________________________
+Char_t* TOSUtils::FormatArrayList(Int_t n, Float_t* arr, const Char_t* format)
+{
+    // Returns a comma-separated list of all elements of the array 'arr' as 
+    // a string using 'format' for formatting (default is %e).
+    
+    // get output string
+    Char_t* out = GetOutputString();
+ 
+    // clear string
+    out[0] = '\0';
+    
+    // create formatting string
+    Char_t fmt[8];
+    sprintf(fmt, "%s", format);
+ 
     // format list
     Char_t tmp[512];
     for (Int_t i = 0; i < n; i++)

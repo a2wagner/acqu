@@ -2,6 +2,13 @@ cmake_minimum_required (VERSION 2.6)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/subdir-header.cmake)
 message(STATUS "Configuring acqu_core...")
 
+# LZMA for reading xz files directly
+# it looks like ROOT provides liblzma.a in his own lib
+# directory. So maybe you need to rebuild ROOT after
+# installing the LZMA header dev files... 
+find_package(LibLZMA REQUIRED)
+include_directories(${LIBLZMA_INCLUDE_DIRS})
+
 # the following feature helps us to get rid of
 # getenv("acqu"), getenv("acqu_sys"), getenv("ROOTSYS")
 # because we define this variables now at "configure" time!
@@ -18,7 +25,7 @@ endif()
 # use all "src" subfolders as include directories
 # this is also used by ROOT_PREPARE_LIB as arguments to rootcint 
 file(GLOB ALLSRCDIRS "*/src")
-include_directories(${ALLSRCDIRS} "${CMAKE_CURRENT_BINARY_DIR}/AcquRoot/src")
+include_directories(${ALLSRCDIRS} "${CMAKE_CURRENT_BINARY_DIR}/AcquRoot/src" )
 
 # This builds automagically all the ROOT-enabled libraries
 macro(CompileCoreLib MOD)
@@ -29,7 +36,7 @@ macro(CompileCoreLib MOD)
   add_library("lib${MOD}" SHARED ${SRCS} ${ACQU_CONFIG_FILE})
 
   set_target_properties("lib${MOD}"
-    PROPERTIES COMPILE_FLAGS "${ARGN}" LIBRARY_OUTPUT_NAME ${MOD})
+    PROPERTIES COMPILE_FLAGS "${ARGN}" OUTPUT_NAME ${MOD})
   target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${EXTRA_LIBS})
   # track this library for the following exe's
   list(APPEND CORE_LIBS "lib${MOD}")
@@ -44,6 +51,7 @@ set(CORE_LIBS)
 
 
 CompileCoreLib(AcquRoot)
+target_link_libraries(libAcquRoot ${LIBLZMA_LIBRARIES})
 CompileCoreLib(AcquDAQ "-O0") # AcquDAQ must not be optimized (hardware access gets scrambled)
 CompileCoreLib(AcquMC)
 
@@ -66,10 +74,17 @@ endif()
 # install some scripts to the bin directory
 # by creating symlinks
 file(GLOB CORE_EXTRA_SCRIPTS "scripts/*")
+# also add a custom command which deletes all output binaries
+#add_custom_target(_link_dummy
+#  COMMAND ${CMAKE_COMMAND} -E remove_directory ${EXECUTABLE_OUTPUT_PATH}
+#  COMMAND ${CMAKE_COMMAND} -E make_directory ${EXECUTABLE_OUTPUT_PATH}
+#  )
+#set_source_files_properties(_link_dummy PROPERTIES SYMBOLIC ON)
 foreach(f ${CORE_EXTRA_SCRIPTS})
   get_filename_component(f_name ${f} NAME)
   add_custom_target(link_${f_name} ALL
-    COMMAND ${CMAKE_COMMAND} -E create_symlink "${f}" "${EXECUTABLE_OUTPUT_PATH}/${f_name}")
+    COMMAND ${CMAKE_COMMAND} -E create_symlink "${f}" "${EXECUTABLE_OUTPUT_PATH}/${f_name}"
+    )
 endforeach()
 
 # now build the binaries (but only if DAQ mode is on!),

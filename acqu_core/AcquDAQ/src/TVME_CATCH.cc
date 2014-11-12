@@ -351,7 +351,7 @@ Int_t TVME_CATCH::ProgFPGA(Char_t* filename, Int_t port)
 void TVME_CATCH::Pause()
 {
   // Mickey Mouse delay
-  usleep(100);
+  //usleep(100);
   printf(".");
 }
 

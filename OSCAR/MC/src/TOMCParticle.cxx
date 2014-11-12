@@ -1,5 +1,3 @@
-// SVN Info: $Id: TOMCParticle.cxx 669 2010-10-18 01:05:04Z werthm $
-
 /*************************************************************************
  * Author: Dominik Werthmueller, 2008-2010
  *************************************************************************/
@@ -31,6 +29,8 @@ TOMCParticle::TOMCParticle(TParticlePDG* inPDG, Bool_t initDecay)
     fNDecay = 0;
     fDecay = 0;
     fMassDistr = 0;
+    fVertex = new TVector3();
+    fHasVertex = kFALSE;
 
     // set machine clock based random seed to the standart
     // ROOT random number generator (used by TGenPhaseSpace)
@@ -50,6 +50,8 @@ TOMCParticle::TOMCParticle(const Char_t* inName, Bool_t initDecay)
     fNDecay = 0;
     fDecay = 0;
     fMassDistr = 0;
+    fVertex = new TVector3();
+    fHasVertex = kFALSE;
     
     // set machine clock based random seed to the standart
     // ROOT random number generator (used by TGenPhaseSpace)
@@ -70,7 +72,9 @@ TOMCParticle::TOMCParticle(Int_t inID, Bool_t isGeant3_ID, Bool_t initDecay)
     fNDecay = 0;
     fDecay = 0;
     fMassDistr = 0;
-    
+    fVertex = new TVector3();
+    fHasVertex = kFALSE;
+
     // set machine clock based random seed to the standart
     // ROOT random number generator (used by TGenPhaseSpace)
     if (initDecay) gRandom->SetSeed(0);
@@ -87,6 +91,7 @@ TOMCParticle::~TOMCParticle()
         for (Int_t i = 0; i < fNDecay; i++) delete fDecay[i];
         delete [] fDecay;
     }
+    if (fVertex) delete fVertex;
 }
 
 //______________________________________________________________________________
@@ -138,17 +143,14 @@ TOMCParticle* TOMCParticle::AddDecayParticle(const Char_t* inPartName)
     // mark particle as unstable to trigger the decay calculation
     fStable = kFALSE;
     
+    // set individual vertex depending on mother particle
+    if (GetLifetime(GetPDG_ID()) > 0) part->SetHasVertex(kTRUE);
+
+    // enable vertex if mother particle has own vertex itself
+    if (fHasVertex) part->SetHasVertex(kTRUE);
+
     // backup the existing decay products
-    TOMCParticle** backup = 0;
-    if (fNDecay)
-    {
-        // copy the decay products
-        backup = new TOMCParticle*[fNDecay];
-        for (Int_t i = 0; i < fNDecay; i++) backup[i] = fDecay[i];
-        
-        // delete the old array
-        delete [] fDecay;
-    }
+    TOMCParticle** backup = fDecay;
 
     // create new decay particle array
     fDecay = new TOMCParticle*[fNDecay + 1];
@@ -156,15 +158,15 @@ TOMCParticle* TOMCParticle::AddDecayParticle(const Char_t* inPartName)
     // copy backuped particles
     for (Int_t i = 0; i < fNDecay; i++) fDecay[i] = backup[i];
 
-    // delete the backup
-    delete [] backup;
-
     // add new particle
     fDecay[fNDecay] = part;
-    
+   
     // increment number of decay particles
     fNDecay++;
-
+    
+    // delete the backup
+    if (backup) delete [] backup;
+ 
     // return added particle
     return part;
 }
@@ -212,21 +214,21 @@ Bool_t TOMCParticle::CalculateDecay()
         // get decay particle
         TOMCParticle* decayPart = GetDecayParticle(i);
 
-        // check for Rootinos
-        if (decayPart->GetPDG_ID()) 
+        // take mass from distribution if set [GeV]
+        if (decayPart->GetMassDistribution()) 
         {
-            masses[i] = decayPart->GetPDGMassGeV();
+            masses[i] = 0.001 * decayPart->GetMassDistribution()->GetRandom();
         }
-        else
+        else 
         {
-            // check for mass distribution, set random mass [GeV]
-            if (decayPart->GetMassDistribution()) 
+            // check if particle is known by PDG   
+            if (decayPart->GetPDG_ID()) 
             {
-                masses[i] = 0.001 * decayPart->GetMassDistribution()->GetRandom();
+                masses[i] = decayPart->GetPDGMassGeV();
             }
-            else 
+            else
             {
-                Error("CalculateDecay", "No mass distribution found for decay Rootino");
+                Error("CalculateDecay", "No mass found for decay particle! Rootino without mass distribution?");
                 return kFALSE;
             }
         }
@@ -257,6 +259,68 @@ Bool_t TOMCParticle::CalculateDecay()
 
     // calculation is ok here
     return kTRUE;
+}
+
+//______________________________________________________________________________
+void TOMCParticle::CalculateVertex(TVector3* v)
+{
+    // Calculate the vertex (if enabled) of this particle and all of its decay 
+    // particles (recursive method) based on the preceding vertex 'v'.
+    
+    // new vertex
+    TVector3 vNew;
+
+    // get particle lifetime
+    Double_t tau = GetLifetime(GetPDG_ID());
+
+    // check if the particle has some defined lifetime
+    if (tau > 0)
+    {
+        // calculate lifetime in the lab frame (inspired by PLUTO)
+        Double_t t = -fP4->Gamma() * tau * TMath::Log(gRandom->Rndm());
+        
+        // calculate new vertex [cm]
+        vNew = *v + 100. * TMath::C() * t * fP4->BoostVector();
+    }
+    else
+    {
+        // keep current vertex
+        vNew = *v;
+    }
+
+    // save current vertex if enabled
+    if (fHasVertex) *fVertex = *v;
+
+    // calculate vertex of each decay product
+    for (Int_t i = 0; i < fNDecay; i++) 
+        GetDecayParticle(i)->CalculateVertex(&vNew);
+}
+
+//______________________________________________________________________________
+Double_t TOMCParticle::GetLifetime(Int_t pdgID)
+{
+    // Return the proper lifetime in seconds of the particle with PDG ID 'pdgID'.
+    // Return 0 if the particle lifetime is not supported.
+
+    switch (pdgID)
+    {
+        case 310:
+            return TOGlobals::kKS0Lifetime;
+        case 321:
+            return TOGlobals::kKChargedLifetime;
+        case -321:
+            return TOGlobals::kKChargedLifetime;
+        case 3122:
+            return TOGlobals::kLambdaLifetime;
+        case 3212:
+            return TOGlobals::kSigma0Lifetime;
+        case 3222:
+            return TOGlobals::kSigmaPLifetime;
+        case 3112:
+            return TOGlobals::kSigmaMLifetime;
+        default:
+            return 0;
+    }
 }
 
 //______________________________________________________________________________

@@ -37,8 +37,12 @@
 
 Message(STATUS "Looking for ROOT...")
 
+if(NOT "$ENV{ROOTSYS}" STREQUAL "")
+  set(ROOTSYS $ENV{ROOTSYS} CACHE PATH "Path to the ROOT installation directory")
+endif()
+
 Set(ROOT_CONFIG_SEARCHPATH
-  $ENV{ROOTSYS}/bin
+  ${ROOTSYS}/bin
   /opt/root/bin
   /cern/root/bin
   /etc/root/bin
@@ -55,8 +59,12 @@ Find_Program(ROOT_CONFIG_EXECUTABLE NAMES root-config
             )
      
 If(NOT ROOT_CONFIG_EXECUTABLE)
-  Message(STATUS "Looking for ROOT... - Not found")
-  Message(STATUS "ROOT not installed in the searchpath and ROOTSYS is not set. Please set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in the subdirectory cmake/Modules.")
+  Message(STATUS "Looking for ROOT with root-config... - Not found")
+  Message(STATUS "ROOT not installed in the searchpath and ROOTSYS is not set.")
+  Message(STATUS "Please set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in the subdirectory cmake/Modules.")
+  If(ROOT_FIND_REQUIRED)
+    Message(FATAL_ERROR "ROOT is required to build, exiting.")
+  endif()
   return()
 endif()
 

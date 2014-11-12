@@ -1,5 +1,3 @@
-// SVN Info: $Id: TOSUtils.h 1433 2012-11-05 17:18:46Z werthm $
-
 /*************************************************************************
  * Author: Dominik Werthmueller, 2008
  *************************************************************************/
@@ -18,6 +16,7 @@
 #define OSCAR_TOSUtils
 
 #include <cstring>
+#include <cstdlib>
 
 #include "TError.h"
 #include "TRandom3.h"
@@ -41,6 +40,7 @@ namespace TOSUtils
     Char_t* ExtractDirectory(const Char_t* s);
     Char_t* ExtractFileName(const Char_t* s);
     Char_t* ExtractPureFileName(const Char_t* s);
+    Int_t ExtractRunNumber(const Char_t* s);
     
     Char_t* SubString(const Char_t* s, Int_t start, Int_t end);
     Char_t* Trim(const Char_t* s);
@@ -50,6 +50,7 @@ namespace TOSUtils
 
     Char_t* FormatArrayList(Int_t n, Int_t* arr, const Char_t* format = "%d");
     Char_t* FormatArrayList(Int_t n, UInt_t* arr, const Char_t* format = "%d");
+    Char_t* FormatArrayList(Int_t n, Float_t* arr, const Char_t* format = "%e");
     Char_t* FormatArrayList(Int_t n, Double_t* arr, const Char_t* format = "%e");
     Char_t* FormatBinary(Int_t n, Int_t length = 0);
     Char_t* FormatTimeSec(Double_t seconds);

@@ -6,7 +6,11 @@
 // Check plots of TAPS Veto spectra
 //
 
-CheckLiveTimes(){
+CheckLiveTimes(TCanvas* canv){
+	if(canv==NULL) {
+		return;
+	}
+	
   Char_t* hname[] = {
     "LiveTotal",
     "LiveTrig",
@@ -61,10 +65,7 @@ CheckLiveTimes(){
 };
   Int_t log[] = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
   Int_t col[] = { 4,4,5,5,2,2,2,2,2,2,5,5,3,3,3,4,4,4,4,4,4,2,2,2,5 };
- //
   TH1F* h1;
-  TCanvas* canv;
-  canv = new TCanvas("Livetimes-Spectra","LiveTime Spectra",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(4,6,0.01,0.01);
   for( Int_t i=0; i<24; i++ ){
@@ -77,13 +78,4 @@ CheckLiveTimes(){
       h1->GetXaxis()->SetTitle(xname[i]);
       h1->Draw();
   }
-}
-
-
-void LiveTimesClear(){
-  printf("Not yet implemented\n");
-}
-
-void SaveLiveTimes(){
-  printf("Not yet implemented\n");
 }

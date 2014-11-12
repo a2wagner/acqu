@@ -1,7 +1,5 @@
-// SVN Info: $Id: TOA2BaseDetParticle.h 1261 2012-07-28 20:48:41Z werthm $
-
 /*************************************************************************
- * Author: Dominik Werthmueller, 2008-2011
+ * Author: Dominik Werthmueller, 2008-2014
  *************************************************************************/
 
 //////////////////////////////////////////////////////////////////////////
@@ -23,7 +21,6 @@
 #include "TLorentzVector.h"
 
 #include "TOA2Detector.h"
-#include "TOPhysics.h"
 
 
 class TOA2BaseDetParticle : public TObject
@@ -54,6 +51,13 @@ protected:
     Int_t fVetoIndex;                           // index of the Veto element (TAPS only)
     Double_t fVetoEnergy;                       // energy deposited in the Veto (TAPS only)
     Double_t fVetoTime;                         // time of veto hit (TAPS only)
+    
+    Double_t fMWPC_X1;                          // X-coordinate of MWPC hit position 1 [cm]
+    Double_t fMWPC_Y1;                          // Y-coordinate of MWPC hit position 1 [cm]
+    Double_t fMWPC_Z1;                          // Z-coordinate of MWPC hit position 1 [cm]
+    Double_t fMWPC_X2;                          // X-coordinate of MWPC hit position 2 [cm]
+    Double_t fMWPC_Y2;                          // Y-coordinate of MWPC hit position 2 [cm]
+    Double_t fMWPC_Z2;                          // Z-coordinate of MWPC hit position 2 [cm]
 
 public:
     TOA2BaseDetParticle();
@@ -65,9 +69,10 @@ public:
     Bool_t Calculate4VectorTOFTagger(TLorentzVector* p4, Double_t mass, Double_t taggerTime, Bool_t isMC = kFALSE);
     Double_t CalculateEkinTOFTagger(Double_t mass, Double_t taggerTime, Bool_t isMC = kFALSE);
     Double_t CalculateEkinTOFTAPS(Double_t mass, Double_t tapsTime, Bool_t isMC = kFALSE);
-    Double_t CalculateTOFTagger(Double_t taggerTime, Bool_t isMC = kFALSE);
+    Double_t CalculateTOFTagger(Double_t taggerTime, Bool_t isMC = kFALSE, A2TAPSType_t tapsType = kTAPS_2007);
     Double_t CalculateTOFCB(Double_t cbTime, Bool_t isMC = kFALSE);
     Double_t CalculateTOFTAPS(Double_t tapsTime, Bool_t isMC = kFALSE);
+    Bool_t CalculatePSA(Double_t* psaR, Double_t* psaA);
 
     void SetPDG_ID(PDG_t id) { fPDG_ID = id; }
     void SetDetector(A2Detector_t d) { fDetector = d; }
@@ -95,6 +100,13 @@ public:
     void SetVetoIndex(Int_t index) { fVetoIndex = index; }
     void SetVetoEnergy(Double_t energy) { fVetoEnergy = energy; }
     void SetVetoTime(Double_t time) { fVetoTime = time; }
+    
+    void SetMWPC_X1(Double_t x) { fMWPC_X1 = x; }
+    void SetMWPC_Y1(Double_t y) { fMWPC_Y1 = y; }
+    void SetMWPC_Z1(Double_t z) { fMWPC_Z1 = z; }
+    void SetMWPC_X2(Double_t x) { fMWPC_X2 = x; }
+    void SetMWPC_Y2(Double_t y) { fMWPC_Y2 = y; }
+    void SetMWPC_Z2(Double_t z) { fMWPC_Z2 = z; }
 
     PDG_t GetPDG_ID() const { return fPDG_ID; }
     A2Detector_t GetDetector() const { return fDetector; }
@@ -126,7 +138,7 @@ public:
     
     virtual void Print(Option_t* option = "") const;
 
-    TOA2BaseDetParticle& operator=(TOA2BaseDetParticle& p);
+    TOA2BaseDetParticle& operator=(const TOA2BaseDetParticle& p);
 
     ClassDef(TOA2BaseDetParticle, 1)  // Base class for detected particles in the A2 setup
 };

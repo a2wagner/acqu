@@ -29,6 +29,7 @@
 #pragma link C++ class TA2Pi0Compton+;
 #pragma link C++ class TA2SaschaPhysics+;
 #pragma link C++ class TA2OnlinePhysics+;
+#pragma link C++ class TA2OnlinePhys+;
 #pragma link C++ class TA2UserPhysics+;
 #pragma link C++ class TA2MesonPhysics+;
 #pragma link C++ class TA2AccessSQL+;
@@ -38,14 +39,9 @@
 #pragma link C++ class TA2TAPSAnalysis+;
 // TA2My... extension classes
 //#pragma link C++ class TA2MyAnalysis+;
-#pragma link C++ class TA2MyCalibration+;
 #pragma link C++ class TA2MyCaLib+;
-#pragma link C++ class TA2MyClusterCalib+;
 #pragma link C++ class TA2MyRateEstimation+;
 #pragma link C++ class TA2MyPhysics+;
-#pragma link C++ class TA2MyCrystalBall+;
-#pragma link C++ class TA2MyTAPS+;
-#pragma link C++ class TA2MyTAPS_BaF2PWO+;
 // Apparatus classes
 #pragma link C++ class TA2GenericApp+;
 #pragma link C++ class TA2Calorimeter+;
@@ -55,20 +51,18 @@
 #pragma link C++ class TA2Taps+;
 #pragma link C++ class TA2CentralApparatus+;
 #pragma link C++ class TA2BeamPolMon+;
+#pragma link C++ class TA2LinearPolEpics+;
+
 // Detector classes
 #pragma link C++ class TA2PlasticPID+;
 #pragma link C++ class TA2PlasticVETO+;
 #pragma link C++ class TA2CalArray+;
 #pragma link C++ class TA2TAPS_BaF2+;
 #pragma link C++ class TA2TAPS_Veto+;
-#pragma link C++ class TA2CylMWPC+;
 #pragma link C++ class TA2FPMicro;
 #pragma link C++ class TA2PairSpec+;
 #pragma link C++ class TA2Moeller+;
 // Utility classes...components of detectors etc
-#pragma link C++ class TA2CylStripSven+;
-#pragma link C++ class TA2CylWireSven+;
-#pragma link C++ class TA2WCLayerSven+;
 #pragma link C++ class TA2Event+;
 #pragma link C++ class TA2KFParticle+;
 #pragma link C++ class TA2CBKinematicFitter+;
@@ -79,5 +73,8 @@
 #pragma link C++ class TA2CentralTrack++;
 #pragma link C++ class TA2TrackLine++;
 #pragma link C++ class TA2MwpcIntersection++;
+#pragma link C++ class TA2GeomCalibPhysics+;
+#pragma link C++ class TA2CylMwpcLayer+;
+
 
 #endif

@@ -1,73 +1,15 @@
-//--Author      JRM Annand    19th Jun 2003
-//--Rev         JRM Annand...
-//--Rev         ss,dk         When ??
-//--Rev         JRM Annand     7th Dec 2003
-//--Rev         D. Krambrich  17th Jan 2004
-//--Rev         JRM Annand    30th Apr 2011
-//--Rev         B. Oussena    10th Jun 2011  removed htons I2cWriteChk()
-//                                           usleep() after a GeSiCA write
-//--Rev         B. Oussena    13th Jun 2011  split (if Read(GeSiCA-Reg) & Value)
-//--Rev         B. Oussena    27th Jun 2011  sleep(2) in TVME_GeSiCA::ProgSADC
-//--Rev         B. Oussena    4th  Jul 2011  usleep(2) in TVME_GeSiCA::ProgSADC
-//--Rev         B. Oussena    5th  Jul 2011  split (if Read(GeSiCA-Reg) & Value)
-//                                           TVME_GeSiCA::SpyRead()
-//--Rev         JRM Annand    9th  Jul 2011  Tidy up and further delay fiddle
-//--Rev         JRM Annand   10th  Jul 2011  Use EIBase register Spy reset
-//--Rev         JRM Annand   11th  Jul 2011  Try to improve speed
-//--Rev         JRM Annand   24th  Jan 2012  Save TCS event ID
-//--Rev         JRM Annand   25th  Jan 2012  Constructor set bits = 13
-//--Rev         B. Oussena   22nd  Nov 2012  Add Send Event ID in SpyRead()
-//--Rev         JRM Annand   17th  Sep 2013  Spy buff timeout 200 us
-//--Update      JRM Annand   27th  Sep 2013  Try pause() spy buff wait
-//
-//
-//--Description
-//
-//                *** Acqu++  ***
-// Data Acquisition for Sub-Atomic Physics Experiments.
-//
-// GeSiCA
-// Procedures for GeSiCA driver boards for SG-ADC
-// Converted from ACQU 3v7 to AcquDAQ format JRMA 30th April 2011
-// Initialisation Debugging by B. Oussena June-July 2011
-//
-
-/*
-  Cleanups to do:
-  - remove dummy-variable
-  - i2c broadcast addr. was changed from 0 to 0xff -> check!
-  - i2c addr. now starts at 0 to port 0 -> check if there is still a i+1 
-  somewhere
-  - readback of software set addr. might only look at 7 bits to compensate for 
-  harware failure! chnge 0x7f to 0xff!
-  - make setting thresholds only for init-level > 0 
-
-  Changelog:
-  19.01.04: -dk-
-  - clear read-buffer data[]usleep(1);// added  -----------Baya
- in every event to have better debugging
-  possibilities
-  - check buffersize slink-header vs. hardware information
-  - inplemented readout looking al #wrds in register +0x24. "Old" readout 
-  got conserved. Please switch back as soon as possible-
-  20.01.04: -dk-
-  - little cleanup. Switched back to "old" readout procedure, but 
-  implemnted errorblock on inconsistent eventsize.
-  05.05.04: -dk-
-  - added directive to log setting of thresholds to file.
-  - minor cleanups. There is still a lot of work ro do!
-  22.07.04: -dk-
-  - added ivmeTVME_GeSiCA-i2cwait.cc~-output to "inconsistent buffersize"-errormessage.
-
-  26.07.04: jrma, dk:
-  - added "ESG_SINGLE-mode in ADC-sparse-mode.
-
-*/
-
-//------------------------------------------------------------------------------
-
 #include "TVME_GeSiCA.h"
-#include <arpa/inet.h>
+
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <bitset>
+#include <unistd.h>
+
+using namespace std;
 
 //------------------------------------------------------------------------------
 Map_t kGeSiCA_Keys[] = {
@@ -91,8 +33,8 @@ VMEreg_t GeSiCAReg[] = {
   {0x0,         0x1,    'l',    0},  // EIBase    0 Base
   {0x14,        0x0,    'l',    0},  // EIFPGAReg 1 FPGA download
   {0x20,        0x0,    'l',    0},  // EIMStatus 2 Module Status
-  {0x24,	0x0,	'l',	0},  // EIDStatus 3 Data-Buffer Status
-  {0x28,	0x0,	'l',	0},  // EIDatum   4 Data-Buffer
+  {0x24,	      0x0,	  'l',	  0},  // EIDStatus 3 Data-Buffer Status
+  {0x28,	      0x0,	  'l',	  0},  // EIDatum   4 Data-Buffer
   {0x2c,        0x0,    'l',    0},  // EIHlPort  5 Hot-Link Port selection
   // I2C-registers
   {0x48,        0x0,	'l',	0},  // EI2CAddrCtl 6 Address and Control
@@ -102,14 +44,13 @@ VMEreg_t GeSiCAReg[] = {
   {0x44,        0x0,	'l',	0},  // EI2CdrLow  10 Data Read Low
   {0x58,        0x0,	'l',	0},  // EI2CdrHigh 12 Data Read High 3/11/03
   {0x50,        0x0,	'l',	0},  // EI2CPortSelect  13 Select i2c-port
-  {0x48,        0x0,	'w',	0},  // genLD8 'w' = short
   {0xffffffff, 0, 0, 0}              // terminator
 };
 
 
 //------------------------------------------------------------------------------
 TVME_GeSiCA::TVME_GeSiCA( Char_t* name, Char_t* file, FILE* log,
-			  Char_t* line ):
+                          Char_t* line ):
   TVME_CATCH( name, file, log, line )
 {
   // Basic initialisation 
@@ -133,15 +74,13 @@ TVME_GeSiCA::~TVME_GeSiCA( )
 void TVME_GeSiCA::ReadIRQ( void** outBuffer )
 {
   // Read GeSiCA (SG-ADC) Data Buffer via Spy Buffer (VMEbus)
-  // This is a cut-down version just to try
-  // Full functionality is in ReadIRQorig
-  //
+
   UInt_t* pdatum;
   Int_t adcMode;                // 0: latch-all, 1: sparsified
   Int_t chipID;                 // at the moment 1: top / 0: bottom chip
   Int_t adcBlock;
   UShort_t index, value;
-
+  
   UInt_t nword = SpyRead(outBuffer);
   if( !nword ) return;
   // Now decode the contents of the local buffer previously filled
@@ -157,28 +96,30 @@ void TVME_GeSiCA::ReadIRQ( void** outBuffer )
       pdatum++;
       switch(fOpMode){
       case ESG_Triple: 
-	// Save the 3 sums calculated by the SG-ADC
-	// 3 values (sum 0..2) for every ADC channel over pedestal
-	for(Int_t j=0; j<adcBlock; j+=3) {
-	  index = 16 * chipID + (0xf & (*pdatum >> 26)) + fBaseIndex;//index
-	  for(Int_t k=0; k<3; k++){
-	    value = 0xffff & *pdatum++;
-	    ADCStore(outBuffer,value,index);
-	  }
-	}
-	break;
+        // Save the 3 sums calculated by the SG-ADC
+        // 3 values (sum 0..2) for every ADC channel over pedestal
+        for(Int_t j=0; j<adcBlock; j+=3) {
+          index = 16 * chipID + (0xf & (*pdatum >> 26)) + fBaseIndex;//index
+          for(Int_t k=0; k<3; k++){
+            value = 0xffff & *pdatum++;
+            ADCStore(outBuffer,value,index);
+          }
+        }
+        break;
       case ESG_Sum1:
-	// Save single sum calculated by the SADC
-	for(Int_t j=0; j<adcBlock; j++){
-	  index = 16 * chipID + (0xf & (*pdatum >> 26)) + fBaseIndex;//adc ind
-	  value = 0xffff & *pdatum++;
-	  ADCStore(outBuffer, value, index);   
-	}
-	break;
+        // Save single sum calculated by the SADC
+        for(Int_t j=0; j<adcBlock; j++){
+          index = 16 * chipID + (0xf & (*pdatum >> 26)) + fBaseIndex;//adc ind
+          value = 0xffff & *pdatum++;
+          ADCStore(outBuffer, 0, index);
+          ADCStore(outBuffer, value, index);
+          ADCStore(outBuffer, 0, index);
+        }
+        break;
       default:
-	// Anything else do nothing
-	// It should not happen for the moment!
-	return;
+        // Anything else do nothing
+        // It should not happen for the moment!
+        return;
       }
     }
     return;
@@ -188,142 +129,147 @@ void TVME_GeSiCA::ReadIRQ( void** outBuffer )
 }
 
 //---------------------------------------------------------------------------
-void TVME_GeSiCA::ReadIRQorig( void** outBuffer )
+Int_t TVME_GeSiCA::SpyRead( void** outBuffer )
 {
-  // Read GeSiCA (SG-ADC) Data Buffer via Spy Buffer (VMEbus)
-  //
-  volatile UInt_t* pdatum;
-  Int_t adc_mode;                // 0: latch-all, 1: sparsified
-  Int_t chip_id;                 // at the moment 1: top / 0: bottom chip
-  Int_t sum;                     // total "integral" after ped. subtr.
-  Int_t sum_1;                   // 1st "integral"
-  Int_t sum_2;                   // 2nd "integral"
-  UInt_t adc_blocksize;
-  UShort_t index, value;
-  UInt_t lvalue;
-  //  unsigned Int_t nadc;
-  UInt_t n;                  // current channel number
-  Int_t k,l;
-
-  UInt_t nword = SpyRead(outBuffer);
-  if( !nword ) return;
-
-  // Now decode the contents of the local buffer previously filled
-  // from GeSiCA. Skip SLINK header...1st datum should be an ADC header
-  // should be n_sgadc * 2 ADC-headers in the buffer
-  pdatum = fSpyData + 2;
-  //Loop over all ADC Headers
-  for(Int_t i = 0; i < fNChip; i++){
-    adc_mode = 0x1   & (*pdatum >> 24);      // 0: latch_all; 1: sparsified
-    chip_id  = 0xf   & (*pdatum >> 26);      // id of chip (0 or 1 just now)
-    adc_blocksize = 0xfff & (*pdatum >> 12); // ADC Block size
-    pdatum++;
-    
-    // ADC in "Latch" mode
-    if( adc_mode == 0 ){
-      for(n = 0; n<EChanPerBlock; n++){
-	index = (16 * chip_id) + n + fBaseIndex; // adc index
-	switch(fOpMode){
-	case ESG_All:
-	  //save the samples + 3 sum outputs
-	case ESG_Sample:
-	  //save the flash-ADC samples
-	case ESG_Sum1:
-	case ESG_Sum2:
-	  // Store the samples
-	  for(k=0; k<fNSampleWd; k++){
-	    lvalue = *pdatum++; //3 10-bit words packed into 32-bit datum
-	    for( l=0; l<3; l++){
-	      value = lvalue & 0x3ff; //10 bits of data
-	      lvalue = lvalue >> 10;
-	      ADCStore(outBuffer,value,index);
-	    }
-	  }
-	  // Leave out the sums in this case
-	  if (fOpMode == ESG_Sample){
-	    pdatum +=3;
-	    break;
-	  }
-	case ESG_Triple: //Save the 3 sums calculated by the SG-ADC
-	  for(l=0; l<3; l++){ //Store the 3 sums after the sample
-	    value = 0xffff & *pdatum++;
-	    ADCStore(outBuffer,value,index);
-	  }
-	  break;
-	case ESG_Single: //Save pedestal subtracted signal only
-	  if(index!=(0xf & ( *pdatum >> 26)) + fBaseIndex)
-	    fprintf(fLogStream, "<E> GESiCA: Decoder at wrong adc index\n");
-	  sum_1 = (0xffff & *pdatum++); // get 1st sum
-	  sum_2 = (0xffff & *pdatum++); // get 2nd sum
-	  pdatum++; // skip 3rd sum
-	  sum = sum_2 - Int_t(fPedFactor * sum_1);
-	  if( sum <= 0)
-	    value = -sum; //Signal at lower voltage than pedestal
-	  else
-	    value = 0;
-	  ADCStore(outBuffer,value,index);
-	  break;
-	} //switch(sample)
-      } //for(n = 0; n<EChanPerBlock; n++)
-    }//if(adc_mode == 0)
-    
-    // SADC in sparce data mode....integrates samples
-    // sample specifies the sparce-data mode
-    else{
-      switch(fOpMode){
-      case ESG_All:
-	// Save the sample + 3 sum outputs (error)
-      case ESG_Sample:
-	// Save the flash-ADC sample (error)
-	fprintf(fLogStream, "<E> GeSiCA: acqu wants to store samples,\n");
-	break; //Jump out here!
-      case ESG_Triple: 
-	// Save the 3 sums calculated by the SG-ADC
-	// 3 values (sum 0..2) for every ADC channel over pedestal
-	for(n=0; n<adc_blocksize-1; n+=3) {
-	  index = 16 * chip_id + (0xf & (*pdatum >> 26)) + fBaseIndex;// adc index
-	  for(l=0; l<3; l++){
-	    value = 0xffff & *pdatum++;
-	    ADCStore(outBuffer,value,index);
-	  }
-	}
-	break;
-      case ESG_Single:
-	// Save sum #1 of the 3 (#0,1,2) calculated by SG-ADC
-	for( n=0; n<adc_blocksize-1; n+=3) {
-	  index = 16 * chip_id + (0xf & (*pdatum >> 26)) + fBaseIndex;//adc ind
-	  sum_1 = 0xffff & *pdatum++;
-	  sum_2 = 0xffff & *pdatum++;
-	  ADCStore( outBuffer, sum_2 - sum_1, index ); // Store ped-subtr. sum
-	  *pdatum++;                    // read to stay in phase with the adc.
-	}
-	break;
-      case ESG_Sum2:
-	// Save 2 sums calculated by the SADC (not yet tested)
-	for(n=0; n<adc_blocksize-1; n+=2){
-	  index = 16 * chip_id + (0xf & (*pdatum >> 26)) + fBaseIndex;// adc index
-	  sum_1 = (0xffff & *pdatum++); // get 1st sum
-	  sum_2 = (0xffff & *pdatum++); // get 1st sum
-	  ADCStore(outBuffer,sum_1, index);
-	  ADCStore(outBuffer,sum_2, index);
-	}
-	break;
-      case ESG_Sum1:
-	// Save single sum calculated by the SADC
-	for(n=0; n<adc_blocksize-1; n++){
-	  index = 16 * chip_id + (0xf & (*pdatum >> 26)) + fBaseIndex;//adc ind
-	  value = 0xffff & *pdatum++;
-	  ADCStore(outBuffer, value, index);   
-	}
-	break;
-      }
-    } // end of sparce mode
-    
-  }   // end if i_chips loop
+  // Read the GeSiCA spy (VMEbus) buffer
+  // Check that the module is active..ie has received a trigger
+  // If any error detected return 0 words read, reset spy buffer
+  // and write error block into data stream
   
-  return;
+  UInt_t datum = 0;
+  UInt_t* pStatus = (UInt_t*)fReg[EIDStatus];
+  for( Int_t k=0; k<=EGeSiCATimeout; k++ ){  // less equal is important here!
+    datum = *pStatus;
+    if( datum & 0x1 )break;
+    if( k == EGeSiCATimeout ){
+      ErrorStore(outBuffer, 7);                 // error code 7
+      SpyReset();
+      return 0;
+    }
+  }
+  UInt_t* pDatum = (UInt_t*)fReg[EIDatum];
+  
+  // Examine header, the first data word...should be 0x0
+  UInt_t header = *pDatum;
+  if( header != 0 ){
+    ErrorStore( outBuffer, 1 );                // error code 1
+    SpyReset();
+    return 0;
+  }
+  
+  // Check for error flag in 1st non-zero header datum
+  header = *pDatum;
+  if( header & ECATCH_ErrFlag ){
+    ErrorStore( outBuffer,0x1 );
+    SpyReset();
+    return 0;
+  }
+  
+  // Check consistency of data-buffer header and data-status register
+  UInt_t nWordHeader = header & 0xffff;
+  UInt_t nWordStatus = 0;
+  UInt_t nWordTries = 0;
+  do {
+    nWordStatus = (*pStatus >> 16) & 0xffff;    
+    if(nWordTries>200) {
+      // reached maximum number of tries, this is 
+      // the NEW error 4 (previously it only checked one time...)
+      ErrorStore( outBuffer, 4 );                  // error code 4
+      SpyReset();
+      return 0;
+    }
+    nWordTries++;
+  }
+  while(nWordHeader != nWordStatus);
+  
+  // Check too many data words
+  if( nWordHeader > fMaxSpy ){                            // overflow ?
+    ErrorStore( outBuffer, 2 );                     // error code 2
+    SpyReset();
+    return 0;
+  }
+  
+  // Make reads from buffer until we 
+  // find the magic ECATCH_Trailer word, 
+  // or fail after fMaxSpy reads
+  UInt_t nWordRead = 0;
+  while(true) {
+    datum = *pDatum;
+    fSpyData[nWordRead] = datum;
+    nWordRead++;
+    // be careful not to use *pDatum but datum, 
+    // since this reads another word!
+    if(datum == ECATCH_Trailer) {
+      break;
+    }
+    
+    
+    if(nWordRead == fMaxSpy) {
+      // this is a pretty bad error, 
+      // one should probably better stop the DAQ somehow if this occurs...
+      ErrorStore( outBuffer, 5 );                     // error code 5
+      SpyReset();
+      return 0;
+    }
+    
+  }
+  
+  // Check if expected number of words match
+  // number of words in spybuffer
+  if(nWordRead != nWordHeader) {
+    ErrorStore( outBuffer, 6 );                     // error code 6
+    SpyReset();
+    return 0;
+  }
+  
+  
+  // Check and buffer status reg. is 0
+  datum = *pStatus;
+  if( datum != 0 ) { 
+    // we should make sure that the buffer is empty
+    // so read until the status reg becomes zero
+    UInt_t n = 0;
+    do {
+      datum = *pDatum;
+      n++;
+      if(n == fMaxSpy) {
+        // mark this as an error
+        ErrorStore( outBuffer, 3 );                     // error code 8
+        SpyReset();
+        return 0;
+      }
+    }
+    while( *pStatus != 0);
+    // mark this as an error
+    ErrorStore( outBuffer, 3 );                     // error code 3
+    SpyReset();
+    return 0;
+  }
+  
+  // Don't forget this: without saving the event ID there is no synch
+  fTCSEventID = fSpyData[0];                      // 1st word = TCS event ID
+  
+  // if the system specifies that this GeSiCA sends the event ID to a remote 
+  // system do it here
+  if( fEventSendMod ) 
+    fEventSendMod->SendEventID( fTCSEventID );  
+  
+  // no errors at all, return number of read words from SpyBuffer
+  return (Int_t)nWordRead;
 }
 
+//---------------------------------------------------------------------------
+void TVME_GeSiCA::SpyReset( )
+{
+  // Reset the GeSiCA module
+  // Igor tells us, not to do this because he does
+  // not know, what happens to the onboard TCS-Receiver. But anyway,
+  // to have an empty buffer after BOS/EOS-procedures, I clear it, to
+  // start catching "good data" in later events. We will need a "read the
+  // buffer empty"-procedure on BOS/EOS.
+  Write(EIBase,1);
+  return;
+}
 
 //---------------------------------------------------------------------------
 void TVME_GeSiCA::PostInit( )
@@ -337,13 +283,50 @@ void TVME_GeSiCA::PostInit( )
   //  printf(" Data-Buffer-Status: 0x%x\n", Read(EIDStatus));
   InitReg( GeSiCAReg );
   TVMEmodule::PostInit();
-  if( fInitLevel > EExpInit0 ){
-    ProgFPGA();           // GeSiCA FPGA file
-    ProgSADC();           // SADC FPGA files
-    ProgOpMode();         // GeSiCA operational mode 
-    ProgSampleSum();      // Sample integration boundaries 
-    ProgThresh();         // SADC thresholds
+
+  if(fInitLevel == EExpInit0) {
+    // init the Gesica always,
+    // this also checks if the Gesica are properly
+    // connected via i2c
+    if(!init_gesica()) {
+      PrintError("","Could not init i2c Gesica...see output above",EErrFatal);
+    }
+    return;
   }
+
+  // start deep init of the GeSiCA / SADCs cards
+  
+
+  // check if Gesica is there at all, no i2c business yet
+  if(!init_gesica(true)) {
+    PrintError("","Could not find Gesica...see output above",EErrFatal);
+  }
+  UInt_t nTries = 10;
+
+  do {
+    ProgFPGA();           // GeSiCA FPGA file
+    // try to init the i2c then,
+    // if it fails, try programming the GeSiCa again
+    // failure is usually indicated by red Rs LED on SADC module
+    if(init_gesica()) 
+      break;
+    
+    nTries--;
+    if(nTries==0) {
+      PrintError("","Could init i2c eventually...see output above",EErrFatal);
+    }
+    
+    cerr << "Retrying GeSiCa programming" << endl;
+    usleep(10000);
+  }
+  while(nTries>0);
+
+  // then do the rest
+  ProgSADC();           // SADC FPGA files
+  
+  ProgOpMode();         // GeSiCA operational mode
+  ProgSampleSum();      // Sample integration boundaries
+  ProgThresh();         // SADC thresholds
 }
 
 //---------------------------------------------------------------------------
@@ -378,31 +361,32 @@ void TVME_GeSiCA::SetConfig( Char_t* line, Int_t key )
   case EGeSiCAMode:
     // Set readout mode for GeSiCA
     if( sscanf(line,"%d%d%d%d",
-	       &fADCmode, &fLatency, &fNSample, &fOpMode )!= 4 )
+               &fADCmode, &fLatency, &fNSample, &fOpMode )!= 4 )
       PrintError(line,"<SetConfig GeSiCA Mode Parse Error>",EErrFatal);
     fNSampleWd = fNSample/3;// 3 SADC data in each 32-bit word from GeSiCA
     break;
   case ESADCReg: 
     // "Expert Tool": Directly write to SADCs registers
     // Not currently supported
+    fprintf(fLogStream,"<SADCReg not supported>\n");
     break;
   case ESADCFile:
     // Read the file for download to the SADCs
-   if(sscanf(line,"%s", fpgafile ) != 1 )
+    if(sscanf(line,"%s", fpgafile ) != 1 )
       PrintError(line,"<SetConfig SADC FPGA file parse error>",EErrFatal);
     fSADCfile = BuildName(fpgafile);
     break;
   case ESADCSum:
     // Read the three sample regions for integrations:
     if( sscanf(line,"%d%d%d%d%d%d", fSamStart, fSamWidth,
-	       fSamStart+1, fSamWidth+1, fSamStart+2, fSamWidth+2 )!= 6 )
+               fSamStart+1, fSamWidth+1, fSamStart+2, fSamWidth+2 )!= 6 )
       PrintError(line,"<Parse Error sample boundaries>",EErrFatal);
     fPedFactor = fSamWidth[1]/fSamWidth[0];
-   break;
+    break;
   case ESADCThresh:
     // Read SADC threshold
     if( sscanf(line,"%d%d%d", fSADCport+fNthresh, fSADCchan+fNthresh,
-	       fSADCthresh+fNthresh) != 3 )
+               fSADCthresh+fNthresh) != 3 )
       PrintError(line,"<SetConfig Parse Threshold Error>",EErrFatal);
     fNthresh++;
     break;
@@ -417,227 +401,166 @@ void TVME_GeSiCA::SetConfig( Char_t* line, Int_t key )
   return;
 }
 
-// ----------------------------------------------------------------------------
-Char_t* TVME_GeSiCA::LoadRBT(Char_t *filename, Int_t* length)
-{
-  // Taken via cut and copy from old code.
-  // Needs to be revised!
-  // this routine reads from a datafile named "datafile",
-  // extracts the 1/0s and writes them to an internal
-  // buffer. The address of the buffer as well as the
-  // length is returned.
-
-  FILE *fp;
-  Int_t len=0;
-  Char_t line[128];
-  Char_t next;
-  Int_t nbits=0;
-  Char_t *data;
-  Int_t i;
-
-  if ( (fp = fopen(filename,"r")) == NULL ) {
-    PrintError(filename,"<File not Found>",EErrFatal);
-  }
-  // 7 is a magic number: the header length is 7 lines ...
-  // The header contains the number  of bits to set. This
-  // number will be used stopping the readout cycle due to
-  // the fact that the file contains no EOF .. */
-  for (i=0; i<7; i++) fgets(line, sizeof(line), fp);
-  sscanf(line,"%*s %d",&len);
-  data = new Char_t[len+1];
-
-  while ( (next=fgetc(fp)) != -1 ) {       // read till EOF
-    if ( (next == '0') || (next=='1') ){   // only binary bits
-      data[nbits] = (Char_t)atoi(&next);   // char to integer
-      if (nbits > len)
-	PrintError(filename,"<Inconsistent Data... Check EOF>",EErrFatal);
-      nbits++;
-    }
-  }
-  if (nbits != len)
-    fprintf(fLogStream,"Inconsistency in datasize!\nShould be: %i, is: %i\n",
-	    len,nbits);
-  // finished:
-  *length = nbits;                         // return length of "rawdata"
-  return data;                             // return the buffer
-}
-
 //-----------------------------------------------------------------------------
 void TVME_GeSiCA::ProgFPGA()
 {
-  // Send data to FPGA load register
-  // Mind that lenght is not a pointer as at read_rbt!
-#define PROGRAM 1
-#define CCLK 2
-#define DATA 4
-#define INIT 1
-#define DONE 2
-  Int_t done=0;
-  UShort_t datum=0;
-  Char_t* data;
-  Int_t length;
-
-  // load conts of FPGA file into memory
-  data = LoadRBT(fFPGAfile, &length);
-  // Initialize chip
-  Write(EIFPGAReg, 7);  // all bits high: PROGRAM=1
-  usleep(1);
-  Write(EIFPGAReg, CCLK);
-  usleep(1);
-
-  // Busywait for FPGA register ready
-  // max. 2s. Assume usleep(1) = microsecond.
-  for( Int_t i=0; i<=EI2CTimeout; i++ ){
-    datum=Read(EIFPGAReg);
-    usleep(1);
-    if( datum & 0x1 ) break;   
-    if( i >= EI2CTimeout )
-      PrintError("","< Timeout GeSiCA FPGA register after 2 sec >", EErrFatal);
+  // check if TCS clocks are locked, then skip programming
+  // this should make initing the system less painful...
+  //UInt_t gesica_SCR = Read(EIMStatus); // *(gesica+0x20/4);
+  //if((gesica_SCR & 0b11) == 0b11) {
+  //  cout << "Skip programming of GeSiCa, TCS is already locked" << endl;
+  //  return;
+  //}
+  // load the RBT file
+  vector<UInt_t> rbt_data;
+  if(!load_rbt(fFPGAfile, rbt_data)) {
+    cerr << "Cannot load RBT file...exit" << endl;
+    exit (EXIT_FAILURE);      
   }
-  // Transmit data
-  for (Int_t nb=0; nb<length; nb++) {
-    // first step
-    datum = data[nb]<<2;
-    Write(EIFPGAReg, datum);
-    // second step
-    datum |= CCLK;
-    Write(EIFPGAReg, datum);
-    // Checking for done
-    if ( (nb > (50*length/51)) ){
-      datum = Read(EIFPGAReg);
-      if( datum & DONE ) done++;
+
+  // the CPLD register 0x14 is used to program the GeSiCa FPGA
+  // there are three relevant bits (see manual)
+
+  // init chip
+  Write(EIFPGAReg, 0x7); //*(gesica+0x14/4) = 0x7;
+  Write(EIFPGAReg, 0x2); //*(gesica+0x14/4) = 0x2;
+
+  // wait for init high (bit0)
+  UInt_t nTries = 0;
+  while((Read(EIFPGAReg) & 0x1) == 0) {
+    nTries++;
+    if(nTries==1000) {
+      cerr << "Reached maximum wait time for init programming. "
+           << "Last value 0x14 = " << hex << Read(EIFPGAReg)<< dec << endl;
+      exit (EXIT_FAILURE); 
     }
   }
-  if (done <= 2)
-    PrintError("","<Insufficient DONE from Chip during FPGA load>",EErrFatal);
-  else
-    fprintf(fLogStream,"GeSiCA FPGA: %d bits downloaded from file %s\n",
-	    length, fFPGAfile);
-  delete data;
+  UInt_t status = Read(EIFPGAReg);
+  cout << "Start programming, status = 0x" << hex << status << dec << endl;
+
+
+  // transmit data bitwise, per byte msb first
+  for(UInt_t i=0;i<rbt_data.size();i++) {
+    for(int j=7;j>=0;j--) { // j must be signed here
+      UInt_t bit = (rbt_data[i] >> j) & 0x1;
+      // first write the bit, set CCLK low
+      UInt_t datum = (bit << 2);
+      Write(EIFPGAReg, datum); //*(gesica+0x14/4) = datum;
+      // then set CCLK => rising edge of CCLK
+      datum |= 0x2;
+      Write(EIFPGAReg, datum); //*(gesica+0x14/4) = datum;
+    }
+    if(i % (1 << 14) == 0)
+      cout << "." << flush;
+  }
+  cout << endl;
+
+  // check status again
+  status = Read(EIFPGAReg); //*(gesica+0x14/4);
+  if((status & 0x2) == 0) {
+    cerr << "Status bit1 not high (not DONE), programming failed." << endl;
+    exit (EXIT_FAILURE); 
+  }
+  cout << "Programming done, status = 0x" << hex << status << dec << endl;
+
+  // check if clocks are locked (if not there's a maybe ConfigTCS needed...?!)
+  // SCR = status and control register
+  UInt_t gesica_SCR = 0;
+  UInt_t tries = 0;
+  do {
+     gesica_SCR = Read(EIMStatus); // *(gesica+0x20/4);
+     tries++;
+     if(tries>1000000) {
+       cerr << "Timeout while waiting for any clocks getting locked..." << endl;
+       exit(EXIT_FAILURE);
+     }
+  }
+  while((gesica_SCR & 0b11) != 0b11);
+
+  if((gesica_SCR & 0x1) == 0) {
+    cerr << "TCS clock not locked: Status = 0x"
+         << hex << gesica_SCR << dec << endl;
+    exit(EXIT_FAILURE);
+  }
+  if((gesica_SCR & 0x2) == 0) {
+    cerr << "Internal clocks not locked. Status = 0x"
+         << hex << gesica_SCR << dec << endl;
+    exit(EXIT_FAILURE);
+  }
 }
 
 //-----------------------------------------------------------------------------
-void TVME_GeSiCA::ProgSADC(){
-  // Download FPGA files to SADCs via optical link
-  //
-  Int_t i, j;
-  Int_t dummy = 0 ;
-  Int_t status = 0 ;
-  UInt_t adc_id[8];
-  sleep(1);                        // This sleep is very important
-  Write(EIMStatus,0x4);            // enable readout via vme
-  usleep(1);
-  Int_t nadc;
-  // check Module Status:
-  nadc = 0;
-  status = Read(EIMStatus);
-  usleep(1); 
-  printf(" SADC detected at Ports -- ");   
-  for(i = 0x100, j=0; i<0x10000; i=i<<1, ++j){
-    if (status & i) { printf(" %d", j); nadc++; }
+void TVME_GeSiCA::ProgSADC() {
+  // load the RBT file
+  vector<UInt_t> rbt_data;
+  if(!load_rbt(fSADCfile, rbt_data)) {
+    cerr << "Cannot load RBT file...exit" << endl;
+    exit (EXIT_FAILURE);      
   }
-  printf("\n");
-  // Add check that all attached SADCs are detected, FATAL error if not
-  if( nadc != fNSADC )
-    PrintError("","<SADC detect on GeSiCA port failed>",EErrFatal);
-  if ((status & 0x7) != 0x7)
-    PrintError("","<GeSiCA  not Synchronised, Status bits 7\n>",EErrFatal);
-  // now: set the id's of the connected adcs and enable then for DAQ
-  for(i = 0; i< fNSADC; i++){
-    Write(EIHlPort,i);      // select Hot-Link-Port fPHlPort(0x2c)=1   
-    //    usleep(2); 
-    i2cReset();
-    Write(EI2CPortSelect,0xff);      // target id: broadcast -in front of loop?
-    //    usleep(2); 
-    adc_id[i] = i2cReadB(0);         // read back hard-wired id 
-    //    usleep(2); 
-    adc_id[i] = adc_id[i] & 0xff ;   // read back hard-wired id 
-    i2cWrite(1, adc_id[i] + (i<<8)); // set new id CHANGE! i+1 -> i
-    //    usleep(2); 
-    dummy = i2cReadB(1);  
-    //    usleep(2); 
-    dummy = dummy & 0xff;            // cleanup dummy 
-    status = Read(EIMStatus);
-    //    usleep(2);
-    Write(EIMStatus,(status | (0x10000 << i)));
-    //    usleep(2);
-    printf(" Port %d: id 0x%02x changed to %d.\n ",i, adc_id[i], dummy);
-    if ( dummy != i ){  // check...
-      printf("ERROR: setting AdcID at port %d failed!\n", i);
-    }
-  }
-  // Program (all) the FPGAs:
-  // - Fast, but not without risk; 
-  //   it may fail if one of the ADCs has timing problems.
-  //   This one will the simply remain unprogrammed. 
-  //   Might work around this
-  //   by putting it to GeSiCA port 0, i.e. choosing it to be the master.
-  // - Implement check as soon as hardware supports it easily
-  fprintf(fLogStream, " Programming SADC fpgas (%s)\n", fSADCfile);
-  Write(EI2CPortSelect,0xff);    // set broadcast mode
-  //  usleep(2);
-  Write(EIHlPort,(UInt_t)0x00);  // talk first module, others listening
-  //  usleep(2);
-  ProgramSgFPGA();
-  // make sure i2c is disabled everywhere..
-  i2cDisableAll();
-  printf("*** SADC FPGA download from GeSiCA %s complete ***\n",
-	 this->GetName());
-}
-
-//-----------------------------------------------------------------------------
-void TVME_GeSiCA::ProgramSgFPGA(){
-  UInt_t datum=0;
-  Char_t* data;
-  Int_t length;
-  UShort_t i2c_data = 0;
-  UShort_t tmp_i2c_data = 0;
-
-  // Read file contents into memory
-  data = LoadRBT(fSADCfile,&length);
-  // reset sg_adc fpga
-  i2cWriteB(2,0);
-  // set program bit
-  i2cWriteB(2,4);
-  datum = 0;
-  while( datum == 0){
-    Write(EI2CAddrCtl, 0x294);
-    //    usleep(2);
-    // wait for end of i2c command
-    for( Int_t i=0; i<=EI2CTimeout; i++ ){
-      datum = Read(EI2CdwLow);
-      usleep(1);  
-      if( !(datum & 0x1) )break;
-      if( i == EI2CTimeout )
-	PrintError("","< Timeout SADC FPGA register after 2 sec >",EErrFatal);
-    }
-    // check i2c ACK
-    for( Int_t i=0; i<3; i++ ){ 
-      datum = Read(EI2CStatus); // ----------------------------------- Baya
-      usleep(2);                
-      if (datum & 0x08);  // ----------------------------------- Baya
-      else break;
-      if( i == 2 )PrintError("","<SADC I2C timeout on ACK received>",EErrFatal);
-    }
-    datum = Read(EI2CdrLow); // Init bit xilinx chip   // ---------- Baya
-    //    usleep(2);   
-    datum = (datum & 0x1);  // ----------------------------------- Baya
-  }
-  fprintf(fLogStream, " ");
-  for (Int_t nb=0; nb<length; nb+=16) {
-    i2c_data = 0;
-    tmp_i2c_data = 0;
-    for(Int_t nbj = 0; nbj<16; nbj++){
-      tmp_i2c_data = ((tmp_i2c_data << 1) & 0xfffe) + data[nb+nbj] ;
-    }
-    i2c_data = ((tmp_i2c_data & 0x00ff) << 8) + ((tmp_i2c_data & 0xff00) >> 8);
-    i2cWrite( 3  , i2c_data);
   
-    if ((nb & 0xffff) == 0) fprintf(fLogStream, ".");
+  // Download FPGA files to SADCs via optical link
+  for(size_t i=0; i<fNSADC;i++) {
+    cout << ">>>> Programming SADC at Port = " << i << endl;
+    i2c_set_port(i);
+    if(!ProgramSgFPGA(rbt_data)) {
+      cerr << "Try reprogramming once, sometimes necessary after GeSiCa reprogramming..." << endl;
+      if(!ProgramSgFPGA(rbt_data)) {
+	cerr << "Could not successfully program, exit." << endl;
+	exit(EXIT_FAILURE);
+      }
+    }
   }
-  // Finished
-  fprintf(fLogStream, " SADC download done\n");
-  delete data;
+}
+
+bool TVME_GeSiCA::ProgramSgFPGA(vector<UInt_t> rbt_data)
+{
+  // reset FPGA
+  if(!i2c_write(1, 2, 0x0))
+    return false;
+  
+  // set program bit = bit2
+  if(!i2c_write(1, 2, 0x4))
+    return false;
+  
+  // wait for init
+  UInt_t nTries = 0;
+  UInt_t status = 0;
+  do {
+    if(!i2c_read(1, 2, status))
+      return false;
+    nTries++;
+    if(nTries==10000) {
+      cerr << "Reached maximum wait time for init programming. "
+           << "Last status = " << hex << status << dec << endl;
+      return false;
+    }
+  }
+  while((status & 0x1) == 0);
+  
+  // write the file, 2 bytes at once
+  cout << "Programming SADC..." << endl;
+  for(UInt_t i=0;i<rbt_data.size();i+=2) {
+    UInt_t i2c_data = (rbt_data[i+1] << 8) + rbt_data[i];
+    if(!i2c_write(2, 3, i2c_data)) {
+      cerr << "Failed writing at bytes=" << i << endl;
+      return false;
+    }
+    if(i % (1 << 14) == 0)
+      cout << "." << flush;
+  }
+  cout << endl;
+  
+  
+  // check status, bit1 = FPGA0 done, bit3 = FPGA1 done
+  if(!i2c_read(1, 2, status))
+    return false;
+  if(status != 0xe) {
+    cerr << "Status = " << hex << status  << dec
+         << " != 0xe (not both FPGAs indicate DONE), programming failed." << endl;
+    return false;
+  }
+  
+  return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -645,60 +568,54 @@ void TVME_GeSiCA::ProgOpMode(){
   // Program the GeSiCA operational mode
   // ie read out all samples or integrate samples in 3 windows
   // 3 sums or 1 sum may be read
-  i2cEnableAll();
-
-  for(Int_t i=0; i<fNSADC; i++){
-    Write(EI2CPortSelect,i);       // set port i
-    //    usleep(2);
-    Write(EIHlPort,i); 
-    //    usleep(2);
+  
+  bool check = true;
+  
+  for(UInt_t i=0; i<fNSADC; i++){
+    i2c_set_port(i);
 
     // set all adcs to latch or sparse mode
-    i2cWriteChk(0x3, 0, (fADCmode & 0x1)); 
-    i2cWriteChk(0x3, 1, (fADCmode & 0x1));
+    check &= i2c_write_reg(0, 0x3, fADCmode, true); 
+    check &= i2c_write_reg(1, 0x3, fADCmode, true);
     // set latency
-    i2cWriteChk(0x0, 0, fLatency);
-    i2cWriteChk(0x0, 1, fLatency);
+    check &= i2c_write_reg(0, 0x0, fLatency, true);
+    check &= i2c_write_reg(1, 0x0, fLatency, true);
     // set n_samples @ adcs
-    i2cWriteChk(0x1, 0, fNSample);
-    i2cWriteChk(0x1, 1, fNSample);
-
+    check &= i2c_write_reg(0, 0x1, fNSample, true);
+    check &= i2c_write_reg(1, 0x1, fNSample, true);
+    
   }
-  i2cDisableAll();
   printf(" *** SADC operational mode on GeSiCA %s programmed ***\n",
-	 this->GetName());
+         this->GetName());
 }
 
 //-----------------------------------------------------------------------------
 void TVME_GeSiCA::ProgSampleSum(){
   // Program the sample integration boundaries when operating in
   // sample integrating mode
-  i2cEnableAll();
-
-  for(Int_t i=0; i<fNSADC; i++){ // loop over all adc-boards
-    Write(EIHlPort,i);           // select port i
-    //    usleep(2);
-    Write(EI2CPortSelect,i);
-    //    usleep(2);
- 
-    i2cWriteChk(4, 0, fSamStart[0]);  // sample 0 pedestal
-    i2cWriteChk(4, 1, fSamStart[0]);
-    i2cWriteChk(5, 0, fSamWidth[0]);
-    i2cWriteChk(5, 1, fSamWidth[0]);
-    i2cWriteChk(6, 0, fSamStart[1]);  // sample 1 signal
-    i2cWriteChk(6, 1, fSamStart[1]);
-    i2cWriteChk(7, 0, fSamWidth[1]);
-    i2cWriteChk(7, 1, fSamWidth[1]);
-    i2cWriteChk(8, 0, fSamStart[2]);  // sample 2 tail
-    i2cWriteChk(8, 1, fSamStart[2]);
-    i2cWriteChk(9, 0, fSamWidth[2]);
-    i2cWriteChk(9, 1, fSamWidth[2]);
+  
+  bool check = true;
+  for(UInt_t i=0; i<fNSADC; i++){ // loop over all adc-boards   
+    i2c_set_port(i);
+    
+    check &= i2c_write_reg(0, 0x4, fSamStart[0], true);  // sample 0 pedestal
+    check &= i2c_write_reg(1, 0x4, fSamStart[0], true);
+    check &= i2c_write_reg(0, 0x5, fSamWidth[0], true);
+    check &= i2c_write_reg(1, 0x5, fSamWidth[0], true);
+    check &= i2c_write_reg(0, 0x6, fSamStart[1], true);  // sample 1 signal
+    check &= i2c_write_reg(1, 0x6, fSamStart[1], true);
+    check &= i2c_write_reg(0, 0x7, fSamWidth[1], true);
+    check &= i2c_write_reg(1, 0x7, fSamWidth[1], true);
+    check &= i2c_write_reg(0, 0x8, fSamStart[2], true);  // sample 2 tail
+    check &= i2c_write_reg(1, 0x8, fSamStart[2], true);
+    check &= i2c_write_reg(0, 0x9, fSamWidth[2], true);
+    check &= i2c_write_reg(1, 0x9, fSamWidth[2], true);
   }
-
-  i2cDisableAll();
+  if(!check)
+    PrintError("","Failed writing integration windows...", EErrFatal);
   printf(" *** SADC sample sums on GeSiCA %s programmed ***\n",
-	 this->GetName());
-
+         this->GetName());
+  
 }
 
 //-----------------------------------------------------------------------------
@@ -707,13 +624,9 @@ void TVME_GeSiCA::ProgThresh(){
   Int_t chip, reg;
   if( fNthresh != fNChannel )
     PrintError("","<Incompatible number thresholds read in>", EErrFatal);
-
-  i2cEnableAll();
+  bool check = true;
   for( Int_t i=0; i<fNthresh; i++ ){
-    Write(EIHlPort, &fSADCport[i]);       // select port
-    //    usleep(2);
-    Write(EI2CPortSelect, &fSADCport[i]);
-    //   usleep(2);
+    i2c_set_port(fSADCport[i]);
 
     if( fSADCchan[i] < 16 ){
       chip = 0;
@@ -723,217 +636,280 @@ void TVME_GeSiCA::ProgThresh(){
       chip = 1;
       reg = fSADCchan[i] - 16 + 0x10;
     }
-    i2cWriteChk(reg, chip, fSADCthresh[i]);
+    i2c_write_reg(chip, reg, fSADCthresh[i], true);
     fprintf(fLogStream, "SADCThreshold: %s %4d %4d %4d\n", 
-	    GetName(), fSADCport[i], fSADCchan[i], fSADCthresh[i]);
+            GetName(), fSADCport[i], fSADCchan[i], fSADCthresh[i]);
   }
-  i2cDisableAll();
+  if(!check)
+    PrintError("","Failed writing thresholds...", EErrFatal);
   printf(" *** SADC thresholds on GeSiCA %s programmed ***\n",
-	 this->GetName());
+         this->GetName());
 }
 
-//-----------------------------------------------------------------------------
-void TVME_GeSiCA::i2cWait(){
-  // Busywait for i2c transfer to be done. Checks bit 0 of SR for
-  // max. 2s. Assume usleep(1) = microsecond.
-  Int_t datum = 0;  //----------------------------- Baya
-  for( Int_t i=0; i<=EI2CTimeout; i++ ){
-    datum = Read(EI2CStatus);  //------------------ Baya
-    usleep(1);
-    if ( !(datum & 0x1) ) return;
-  }
-  PrintError("","< I2C Status Bit not returned to 0 within 2 sec >", EErrFatal);
-}
-
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cCheckACK(){
-  // Check that the I2C acknowledge bit(3) is cleared
-  Int_t datum = 0;
-  datum = Read(EI2CStatus);
-  if( datum & 0x8 ) 
-    printf("< I2C ACK not received >\n");
-}  
 
 
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cSwitchPort(unsigned port){
-  // Choose port [0..3] for next i2c operations
-  if (port < 8){
-    Write(EIHlPort,port);       // set broadcast mode
-  }
-  else {
-    printf(" i2cSwitchPort(%x); port number out of range [0..7]", port);
-  }
-}
+// I2C routines by A. Neiser
 
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cEnableAll()
-{
-  // enable all I2C ports
-  Write(EI2CPortSelect,0xff);       // set broadcast mode
-  usleep(2);  
-  Write(EI2CAddrCtl, 0xe94);       // set broadcast mode
-  i2cWait();
-}
-
-//------------------------------------------------------------------------------
-
-void TVME_GeSiCA::i2cEnablePort(unsigned port){
-  // set i2c enable for port. (Performs i2c_switch port first)
-  //
-  if (port < 8){
-    i2cSwitchPort(port);
-    Write(EI2CAddrCtl, 0xe94);
-    i2cWait();
-  }
-  else {
-    printf(" i2cEnablePort(%x); port number out of range [0..7]",port);
-  }
-}
-
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cDisableAll(){
-  // Disable all ports 0-7
-  Write(EI2CPortSelect,0xff);
-  usleep(2);
-  Write(EI2CAddrCtl, 0xf94);
-  i2cWait();
-}
-
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cDisablePort(unsigned port){
-
-  // set i2c disable for port. (Performs i2cSwitchPort first)
-  if (port < 8){
-    i2cSwitchPort(port);
-    Write(EI2CAddrCtl, 0xf94);
-    i2cWait();
-  }
-  else {
-    printf("i2cDisablePort(%x); port number out of range [0..7]", port);
-  }
-}
-
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cWrite(UShort_t address, UShort_t data)
-{
-  // Write UShort_t (2 bytes) to I2C
-  Write(EI2CdwLow,data);
-  usleep(2);
-  Write(EI2CAddrCtl, address*0x100 + 0x88);
-  usleep(2);
-  i2cWait();
-  i2cCheckACK();
-}
-
-//------------------------------------------------------------------------------
-void TVME_GeSiCA::i2cWriteB(UShort_t address, UShort_t data)
-{
-  // Write single byte to I2C
-  Write(EI2CdwLow,data);
-  usleep(2);
-  Write(EI2CAddrCtl, address*0x100 + 0x84);
-  usleep(2);
-  i2cWait();
-  i2cCheckACK();
-}
-
-//------------------------------------------------------------------------------
-UShort_t TVME_GeSiCA::i2cRead(UShort_t address){
-  // read and return UShort_t 
-  UInt_t datum =0;  // ------------------- Baya
-  Write(EI2CAddrCtl, address*0x100 + 0x98);
-  usleep(2);
-  i2cWait();                                 // introduce errorhandling here!
-  i2cCheckACK();
-  datum = Read(EI2CdrLow); // ------------------ Baya
-  return datum;
-}
-
-//------------------------------------------------------------------------------
-UShort_t TVME_GeSiCA::i2cReadB(UShort_t address)
-{
-  // read single byte and return in UShort_t
-  UInt_t datum =0;  // ------------------- Baya
-  Write(EI2CAddrCtl, address*0x100 + 0x94);
-  usleep(2);
-  i2cWait();                             // introduce errorhandling here
-  i2cCheckACK();
-  datum = Read(EI2CdrLow); // ------------------ Baya
-  return datum;
-}
-
-//------------------------------------------------------------------------------
-
-void TVME_GeSiCA::i2cReset(){
-  // clear registers and reset controller
-  UInt_t datum=0;  //  ------------------------------------------ Baya
-  Write(EI2CAddrCtl,(UInt_t)0);
-  usleep(2);
-  Write(EI2CAddrCtl,0x40);
-  usleep(2);
-  Write(EI2CAddrCtl,(UInt_t)0);
-  usleep(2);// added  -------    --------------------------------Baya
-  for( Int_t i=0; i<=EI2CTimeout; i++ ){
-    datum = Read(EI2CStatus);  // --------------------------------- Baya
-    usleep(2);
-    if( (datum & 0x7) == 0x6 ){ //------------- Baya, changed JRMA
-      usleep(100000);
-      return;
+bool TVME_GeSiCA::i2c_wait(bool check_ack) {
+  // poll status register 0x4c bit 0,
+  // wait until deasserted
+  for(UInt_t n=0;n<1000;n++) {
+    UInt_t status = Read(EI2CStatus); // *(gesica+0x4c/4);
+    if((status & 0x1) == 0) {
+      //cout << "# After " << n << " reads: 0x4c = 0x" << hex << (status & 0x7f) << dec << endl;
+      // check acknowledge bit
+      if(check_ack && (status & 0x8) != 0) {
+        cerr << "Address or data was not acknowledged " << endl;
+        return false;
+      }
+      return true;
     }
   }
-  PrintError("","< I2C Reset not acknowledged within 4 sec >", EErrFatal);
+  cerr << "Did not see Status Bit deasserted, timeout." << endl;
+  return false;
 }
 
-//------------------------------------------------------------------------------
+bool TVME_GeSiCA::i2c_reset() {
+  Write(EI2CAddrCtl, 0x40); // *(gesica+0x48/4) = 0x40;
+  return i2c_wait(false);
+}
 
-void TVME_GeSiCA::i2cWriteChk(Int_t i2cAddr, Int_t adc_side,
-				UInt_t configVal )
-{
-  // Write a value to the I2C and read it back to check
-  UInt_t readVal =0; 
-  i2cReset();
-  i2cWait();
-  // Seems to be more reliable to read 1st before writing.
-  // ------- I2C READ ------------------------------------
-  Write(EI2CdwLow, ((i2cAddr >> 5) & 0xff));
-  usleep(2);
-  Write(EI2CAddrCtl, (0x4000 + ((adc_side << 13) & 0x2000) +
-		      ((i2cAddr << 8) & 0x1f00) + 0x84));
-  i2cWait();
-  Write(EI2CAddrCtl,(0x4000 + ((adc_side << 13) & 0x2000) +
-		     ((i2cAddr << 8) & 0x1f00) + 0x98));
-  i2cWait();
-  readVal = Read(EI2CdrLow); //------------------------------------ Baya  
-  readVal = (readVal  & 0xffff);
-
-  //--- ------- I2C WRITE -----------------------------------
-  Write(EI2CdwLow,(((configVal << 8) & 0xff00) + ((i2cAddr >> 5) & 0xff)));
-  usleep(2); 
-  Write(EI2CdwHigh,((configVal >> 8) & 0xff));
-  usleep(2); 
-  Write(EI2CAddrCtl,(0x4000 + ((adc_side << 13) & 0x2000) +
-		     ((i2cAddr << 8) & 0x1f00) + 0x8c));
-  i2cWait();
-
-  // Read back and check
-  // ------- I2C READ ------------------------------------
-  Write(EI2CdwLow,((i2cAddr >> 5) & 0xff));
-  usleep(2);
-  Write(EI2CAddrCtl,(0x4000 + ((adc_side << 13) & 0x2000) + 
-		     ((i2cAddr << 8) & 0x1f00) + 0x84));
-  i2cWait();
-  Write(EI2CAddrCtl,(0x4000 + ((adc_side << 13) & 0x2000) + 
-		     ((i2cAddr << 8) & 0x1f00) + 0x98));
-  i2cWait();
-  readVal = Read(EI2CdrLow); //------------------------------------ Baya  
-  readVal = (readVal  & 0xffff);
-  // Final check
-  if( readVal != configVal ){
-    printf("I2C Write Error: set value = %d, read-back value = %d\n",
-	   configVal, readVal);
-    
+void TVME_GeSiCA::i2c_set_port(UInt_t port_id, bool broadcast) {
+  Write(EIHlPort, port_id & 0xff ); // *(gesica+0x2c/4) = port_id & 0xff;
+  if(broadcast) {
+    Write(EI2CPortSelect, 0xff); // *(gesica+0x50/4) = 0xff; // should be broadcast mode
   }
+  else {
+    Write(EI2CPortSelect, port_id & 0xff); // *(gesica+0x50/4) = port_id & 0xff;
+  }
+}
+
+bool TVME_GeSiCA::i2c_read(UInt_t bytes, UInt_t addr, UInt_t& data) {
+  // bytes must be between 1 and 4
+  
+  // write in address/control register (acr)
+  // always set bit7 (trigger i2c transmission),
+  // and bit4 (read mode)
+  UInt_t acr = (1 << 7) + (1 << 4);
+  // this nicely configures the i2c number of bytes
+  acr |= bytes << 2;
+  // set the address in the upper byte
+  acr |= (addr << 8) & 0x7f00;
+  //cout << "# Read Address/Control: 0x48 = 0x" << hex << acr << dec << endl;
+  Write(EI2CAddrCtl, acr); // *(gesica+0x48/4) = acr;
+  
+  if(!i2c_wait(true))
+    return false;
+  
+  
+  // always read the lower data register 0x44
+  data = Read(EI2CdrLow); //data = *(gesica+0x44/4);
+  
+  // take care of upper data reg 0x58 and masking
+  UInt_t mask = bytes % 2 == 0 ? 0xffff : 0xff;
+  if(bytes>2) {
+    data |= (Read(EI2CdrHigh) & mask) << 16;
+  }
+  else {
+    data &= mask;
+  }
+  return true;
+}
+
+bool TVME_GeSiCA::i2c_write(UInt_t bytes, UInt_t addr, UInt_t data) {
+  // bytes must be between 1 and 4
+  
+  // always write 16bits to low register 0x40
+  Write(EI2CdwLow, data & 0xffff); // *(gesica+0x40/4) = data & 0xffff;
+  
+  // if needed, use upper data register 0x54
+  if(bytes>2) {
+    Write(EI2CdwHigh, (data >> 16) & 0xffff); //*(gesica+0x54/4) = (data >> 16) & 0xffff;
+  }
+  
+  // write in address/control register (acr)
+  // set bit7 (trigger i2c transmission),
+  // but bit4=0 (write mode)
+  UInt_t acr = 1 << 7;
+  // assuming bytes>0 && bytes<4 (the caller should know that)
+  // this nicely configures the i2c number of bytes
+  acr |= bytes << 2;
+  // set the address in the upper byte
+  acr |= (addr << 8) & 0x7f00;
+  //cout << "# Write Address/Control: 0x48 = 0x" << hex << acr << dec << endl;
+  Write(EI2CAddrCtl, acr); //*(gesica+0x48/4) = acr;
+  
+  return i2c_wait(true);
+}
+
+UInt_t i2c_make_reg_addr(UInt_t adc_side, UInt_t reg) {
+  // in order to access the registers of the
+  // ZR chips via the HL chip on the SADC,
+  // we set the highest bit6 in i2c addr
+  UInt_t addr = 1 << 6;
+  // select the chip via bit5 (adc_side=1 and adc_side=0)
+  addr |= (adc_side & 0x1) << 5;
+  // and set the actual register (bit4-bit0)
+  addr |= reg & 0x1f;
+  return addr;
+}
+
+bool TVME_GeSiCA::i2c_read_reg(UInt_t adc_side, UInt_t reg, UInt_t& data) {
+  
+  UInt_t addr = i2c_make_reg_addr(adc_side, reg);
+  
+  // this write before reading is really necessary...
+  // does it tell the HL chip to access this address of one of the ZRs?
+  if(!i2c_write(1, addr, 0))
+    return false;
+  
+  // read the response, maximum two bytes
+  if(!i2c_read(2, addr, data))
+    return false;
+  
+  return true;
+}
+
+bool TVME_GeSiCA::i2c_write_reg(UInt_t adc_side, UInt_t reg, UInt_t data, bool check) {
+  
+  UInt_t addr = i2c_make_reg_addr(adc_side, reg);
+  
+  // tell the HL chip to access this address of the ZR?
+  // this was not in the old code, but a complete i2c_read_reg read was before that
+  // to make it more reliable........?!?!?!
+  //if(!i2c_write(gesica, 1, addr, 0))
+  //  return false;
+  
+  // construct our data, the lower 8 bits must be zero?
+  UInt_t i2c_data = data << 8;
+  if(!i2c_write(3, addr, i2c_data))
+    return false;
+  
+  // check if write was successful
+  if(check) {
+    UInt_t read_data;
+    if(!i2c_read_reg(adc_side, reg, read_data))
+      return false;
+    if(read_data != data)
+      return false;
+  }  
+  
+  return true;
+}
+
+bool TVME_GeSiCA::load_rbt(const char* rbt_filename, vector<UInt_t>& data) {
+  ifstream rbt_file(rbt_filename);
+  if(!rbt_file.is_open()) {
+    cerr << "Could not open RBT file " << rbt_filename << endl;
+    return false;
+  }
+  cout << "Opened RBT file " << rbt_filename << endl;
+  string line;
+  UInt_t lineno = 0;
+  UInt_t numOfBits = 0;
+  while(getline(rbt_file,line)) {
+    lineno++;
+    if(lineno==7) {
+      stringstream ss(line);
+      ss >> line; //  dump leading string
+      ss >> numOfBits;
+    }
+    if(lineno<=7)
+      continue;
+    
+    // convert bit line to number
+    bitset<32> bits(line);
+    UInt_t word = bits.to_ulong();
+    data.push_back((word >> 24) & 0xff);
+    data.push_back((word >> 16) & 0xff);
+    data.push_back((word >>  8) & 0xff);
+    data.push_back((word >>  0) & 0xff);
+  }
+  // check
+  if(data.size() != numOfBits/8) {
+    cerr << "Not enough bits read as promised in header" << endl;
+    return false;
+  }
+  return true;
+}
+
+
+bool TVME_GeSiCA::init_gesica(bool skip_i2c) {
+  
+  // the CPLD module ID is at 0x0, should be 0x440d5918
+  if(Read(EIBase) != 0x440d5918) {
+    cerr << "Gesica firmware invalid, wrong address?" << endl;
+    return false;
+  }
+
+  // enable readout via VME, but disable everything else like debugging pulsers
+  // and all modules
+  Write(EIMStatus, 0x4); // *(gesica+0x20/4) = 0x4;
+
+  // if the Gesica FPGA itself is programmed,
+  // the TCS (and thus i2c) might not be working...
+  if(skip_i2c)
+    return true;
+
+  
+  // Init connected iSADC cards
+  UInt_t init_tries = 10;
+  
+  do {
+    UInt_t gesica_SCR = Read(EIMStatus); // *(gesica+0x20/4);
+    vector<UInt_t> ports;  
+    for(UInt_t port_id=0;port_id<fNSADC;port_id++) {
+      if( (gesica_SCR & (1 << (port_id+8))) == 0) {
+	//cout << "Skipped..." << endl;
+	// silently ignore unconnected cards...
+	continue;
+      }
+      // set to broadcast mode
+      i2c_set_port(port_id, true);
+      // read hardwired id
+      UInt_t hard_id;
+      if(!i2c_read(1, 0x0, hard_id))
+	continue;
+      // write geo id as port_id:
+      // hard_id as the lower 8 bits, port id the higher 8 bits!
+      if(!i2c_write(2, 0x1, hard_id  + (port_id <<8)))
+	continue;
+      // readback geo id
+      UInt_t geo_id;
+      if(!i2c_read(1, 0x1, geo_id))
+	continue;
+      if(geo_id != port_id) {
+	cerr << "Setting Geo ID for port " << port_id << " failed: GeoID=" << geo_id << endl;
+	continue;
+      }
+      ports.push_back(port_id);
+      // enable interface for readout (two VME accesses, too lazy too use bitset here...)
+      //*(gesica+0x20/4) |= 1 << (port_id+16);
+      UInt_t data = Read(EIMStatus);
+      data |= 1 << (port_id+16);
+      Write(EIMStatus, data);
+      //cout << "Found..." << endl;
+    }
+    init_tries--;
+
+    if(ports.size() == fNSADC)
+      break;
+    
+    if(init_tries==0) {
+      cerr << "Expected " << fNSADC << " SADCs connected, " 
+	   << " but found " << ports.size() << endl;
+      cerr << "Try replugging the optical cable connection, or powercycling the crate" << endl;
+      return false;
+    }
+    
+    cerr << "Retrying initing the SADC modules. Sometimes necessary after GeSiCa reprogramming." << endl;
+
+    // give the GeSiCa some time to find the SADC modules...
+    usleep(10000);
+  }
+  while(init_tries>0);
+
+  return true;
 }
 
 

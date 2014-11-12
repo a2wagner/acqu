@@ -73,6 +73,9 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
   Bool_t online = ETrue;
   fBatch = EFalse;
   char setfile[128];
+  char datafile[256] = "";
+  char directory[256] = "./";
+  char batchdir[256] = "./";
   strcpy( setfile, "ROOTsetup.dat" );
 
   // Handle any command-line option here online/offline or setup file
@@ -80,6 +83,9 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
     if( strcmp("--offline", argv[i]) == 0 ) online = EFalse;
     else if( strcmp("--rootfile", argv[i]) == 0 ) online = EFalse;
     else if( strcmp("--batch", argv[i]) == 0 ) fBatch = ETrue;
+    else if( strcmp("--datafile", argv[i]) == 0 ) strcpy( datafile, argv[++i] );
+    else if( strcmp("--directory", argv[i]) == 0 ) strcpy( directory, argv[++i] );
+    else if( strcmp("--batchdir", argv[i]) == 0 ) strcpy( batchdir, argv[++i] );
     else if( strcmp("--", argv[i]) != 0 ) strcpy( setfile, argv[i] );
   }
 
@@ -88,8 +94,25 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
 
   gAR = new TAcquRoot("A2Acqu", fBatch);         // Acqu - Root interface
   if( online ) gAR->SetIsOnline();               // AcquRoot online procedures
+
+  // Set output and batch log files directories before
+  // using config file to give command line preference
+  if (strcmp(directory, "./")) gAR->SetTreeDir(gAR->BuildName(directory));
+  if (fBatch && strcmp(batchdir, "./")){
+    gAR->SetBatchDir(gAR->BuildName(batchdir));
+    gAR->SetLogFile(gAR->BuildName(batchdir, "AcquRoot.log"));
+  }
+
+  // Perform remaining config from file
   gAR->FileConfig( setfile );                    // user-def setup
   if( gAR->GetProcessType() == EMCProcess ) online = EFalse;
+
+  // If batch directory was not set by command line or file
+  // give default to avoid crashing when running batch
+  if (fBatch && ((gAR->GetBatchDir()) == NULL)){
+    gAR->SetBatchDir(gAR->BuildName(batchdir));
+    gAR->SetLogFile(gAR->BuildName(batchdir, "AcquRoot.log"));
+  }
 
   // "online" means receiving data from TA2DataServer which has 3 options
   // 1) network input from remote (usually DAQ) node
@@ -111,6 +134,10 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
     if( gAR->GetDataServerSetup() ){
       gDS = new TA2DataServer("DataServer",gAR);
       gDS->FileConfig( gAR->GetDataServerSetup() );  // configure it
+      if (strcmp(datafile, "")){
+	gDS->GetDataSource(0)->ClearList();
+	gDS->GetDataSource(0)->InputList(datafile, 0, 0);
+      }
       gDS->StartSources();                   // start front-end I/O threads
       gDS->Start();                          // start DataServer thread
       //      gAR->LinkDataServer( gDS );            // Header, if in data
@@ -123,6 +150,10 @@ TA2Control::TA2Control( const char* appClassName, int* argc, char** argv,
   // offline running means read from ROOT Tree files...
   // Look for ADC info as a branch of the Tree
   else if( gAR->GetProcessType() == EMCProcess ){
+    if (strcmp(datafile, "")){
+      gAR->SetNTreeFiles(0);
+      gAR->SaveTreeFile(datafile);
+    }
     if( !gAR->GetADC() ){
       Error("TA2Control","<Manual ADC setup required for MC running>");
       exit(-1);

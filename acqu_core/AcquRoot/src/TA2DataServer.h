@@ -21,7 +21,8 @@
 //                                              in data merging
 //--Rev 	JRM Annand...    1st Mar 2013   More Mk2 merge debugging
 //--Rev 	JRM Annand...    6th Mar 2013   Add TA2TAPSMk2Format
-//--Update	JRM Annand...   18th Sep 2013   Start sources inc usleep 100-200
+//--Rev 	JRM Annand...   18th Sep 2013   Start sources inc usleep 100-200
+//--Update	JRM Annand...   29th Mar 2014   Merged data written at end-run 
 //				      
 //--Description
 //                *** Acqu++ <-> Root ***
@@ -50,6 +51,8 @@ enum{ ESubEventOK, ESubEventLow, ESubEventHigh };
 class ARFile_t;
 
 class TA2DataServer : public TA2System {
+private:
+  Int_t nStreamSpecs;           // counts number of Stream-Spec: statements
 protected:
   TAcquRoot* fAcquRoot;         // ptr to main Acqu - Root class
   ARFile_t* fDataOutFile;       // file to write output
@@ -122,7 +125,9 @@ public:
   Bool_t IsStore(){ return fIsStore; }
   Bool_t IsSortLock(){ return fIsSortLock; }
   Bool_t IsHeaderInit(){ return fIsHeaderInit; }
- 
+  
+  const TThread::EState GetThreadState() { return fServerThread->GetState(); }
+  static const Map_t kDataSrvKeys[];
 
   ClassDef(TA2DataServer,1)     // for ROOT dictionary
 };

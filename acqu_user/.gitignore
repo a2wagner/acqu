@@ -17,6 +17,9 @@
 /histograms
 *.root
 
+#Farm job files
+/jobs
+
 # standard data link to config files
 data
 # Patrik's data folder (test for 2012 EPT data)

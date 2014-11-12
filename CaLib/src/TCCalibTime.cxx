@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibTime.cxx 912 2011-05-18 22:09:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller, Irakli Keshelashvili
@@ -30,6 +30,7 @@ TCCalibTime::TCCalibTime(const Char_t* name, const Char_t* title, const Char_t* 
     for (Int_t i = 0; i < fNelem; i++) fTimeGain[i] = 0;
     fMean = 0;
     fLine = 0;
+    fConvergenceFactor = 1;
 }
 
 //______________________________________________________________________________
@@ -56,6 +57,15 @@ void TCCalibTime::Init()
     fLine->SetLineColor(4);
     fLine->SetLineWidth(3);
  
+
+    // Set the convergence factor, used in new offset calculation
+    sprintf(tmp, "%s.ConvergenceFactor", GetName());
+    if (!TCReadConfig::GetReader()->GetConfigDouble(tmp)) {
+      fConvergenceFactor = 1;
+    }
+    else fConvergenceFactor = TCReadConfig::GetReader()->GetConfigDouble(tmp);
+    Info("Init", "Using a Convergence Factor of %f", fConvergenceFactor);
+
     // get histogram name
     sprintf(tmp, "%s.Histo.Fit.Name", GetName());
     if (!TCReadConfig::GetReader()->GetConfig(tmp))
@@ -257,7 +267,7 @@ void TCCalibTime::Calculate(Int_t elem)
 
         // calculate the new offset
         if (this->InheritsFrom("TCCalibCBRiseTime")) fNewVal[elem] = fOldVal[elem] + fMean;
-        else fNewVal[elem] = fOldVal[elem] + fMean / fTimeGain[elem];
+        else fNewVal[elem] = fOldVal[elem] + fConvergenceFactor * fMean / fTimeGain[elem];
         
         // update overview histogram
         fOverviewHisto->SetBinContent(elem + 1, fMean);

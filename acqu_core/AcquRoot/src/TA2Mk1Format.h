@@ -56,6 +56,11 @@ class TA2Mk1Format : public TA2DataFormat {
   virtual UInt_t GetBufferType( void* b ){ return *(UInt_t*)b; }
 
   // Retrieve header info
+  virtual const Char_t* GetTime() {return fExpInfo->fTime;}
+  virtual const Char_t* GetDescription() {return fExpInfo->fDescription;}
+  virtual const Char_t* GetRunNote() {return fExpInfo->fRunNote;}
+  virtual const Char_t* GetOutFile() {return fExpInfo->fOutFile;}
+  virtual const Int_t GetRunNumber() {return fExpInfo->fRun;}
   virtual Int_t GetNScaler(){ return fExpInfo->fNscaler; }
   virtual Int_t GetNADC(){ return fExpInfo->fNspect; }
   virtual Int_t GetNModule(){ return fExpInfo->fNmodule; }

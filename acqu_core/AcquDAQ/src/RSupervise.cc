@@ -35,6 +35,7 @@ const static Char_t *cmd[] = {
   "NoAuto:",
   "IsRunning:",
   "ConfigTCS:",
+  "SetTCSRunMode:",
   "Camio:",
   "VUPROM:",
   "V874:",

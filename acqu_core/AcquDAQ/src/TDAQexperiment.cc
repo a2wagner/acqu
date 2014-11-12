@@ -45,8 +45,9 @@
 //--Rev 	JRM Annand    3rd Sep 2013  Add VITEC interrupt/event-ID card
 //--Rev 	JRM Annand    9th Sep 2013  Add event-ID master functionality
 //--Rev 	JRM Annand   22nd Sep 2013  Add VUPROMT, remove SlowCtrl thread
-//--Update	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
+//--Rev 	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
 //                                          End-run scaler read for slaves
+//--Update	JRM Annand   29nd Mar 2014  Slave ev-ID read before scaler read
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -697,7 +698,7 @@ void TDAQexperiment::RunIRQ()
       (fSupervise->GetExpCtrlMode() == EExpCtrlNetSlave) )
     fSupervise->ExecAutoStart();
   UInt_t nevID = 0;
-  UInt_t nevIDprev;
+  UInt_t nevIDprev = 0;
   UInt_t readoutPatternOffset = fSynchMod ?
               fSynchMod->GetReadoutPatternOffset() :
               0;
@@ -725,7 +726,7 @@ void TDAQexperiment::RunIRQ()
       *evID = nevID; evID++;           // save event ID number
       out = evID;
       nevID++;
-      if(nevID > 0xffff) nevID = 0;    // reset the event ID
+      if(nevID > 0xffff) nevID = nevIDprev = 0;    // reset the event ID
     }
     // Space for synchronisation event ID (if this is defined)
     // and readout pattern
@@ -742,6 +743,37 @@ void TDAQexperiment::RunIRQ()
     slCtrlCnt++;
     nexta.Reset();
     while( ( mod = (TDAQmodule*)nexta() ) ) mod->ReadIRQ(&out);
+
+    // Move slave event ID stuff here before scaler and EPICS read
+    // so that detection of end-of-run in the slave event ID can trigger
+    // a scaler read etc.
+    // JRMA 29/3/14
+    if( fSynchMod ){
+      // event id
+      *evID = fSynchIndex; evID++;
+      nevID = fSynchMod->GetEventID();
+      *evID = nevID; 
+      // readout bitpattern (for TAPS only)
+      if(readoutPatternOffset>0) {
+        // move to the next 16bit word
+        evID++;        
+        UInt_t status = fSynchMod->GetReadoutPatternStatus(); 
+        UInt_t readoutPattern = fSynchMod->GetReadoutPattern();
+        *evID = readoutPatternOffset+fSynchIndex+0; evID++;
+        *evID = status & 0xffff; evID++; // status reg
+        *evID = readoutPatternOffset+fSynchIndex+1; evID++;
+        *evID = readoutPattern & 0xffff; evID++; // lower 16bit
+        *evID = readoutPatternOffset+fSynchIndex+2; evID++;
+        *evID = (readoutPattern >> 16) & 0xffff; // upper 16 bit
+        // evID++ not needed here, it's the last 16bit word
+      }
+      
+      // Check if end-of-run marker supplied and data storage enabled
+      if((nevID & EExpEvIDEnd) && fIsStore ){
+	fIsRunTerm = kTRUE;
+	scCnt = fScReadFreq;       // force a scaler read
+      }
+    }
 
     // Check if scaler read due. If so loop round linked list of scaler modules
     // If a trigger control module is defined run its ResetTrigCtrl method
@@ -825,6 +857,8 @@ void TDAQexperiment::RunIRQ()
     //-----------------------------------------------------------------------
     if( IsMk2Format() ) *evLen = (Char_t*)out - (Char_t*)evLen;
     // Event ID determined by external hardware...get the ID from that module
+    // Move this block upstream JRMA 29/3/14
+    /*
     if( fSynchMod ){
       // event id
       *evID = fSynchIndex; evID++;
@@ -844,31 +878,30 @@ void TDAQexperiment::RunIRQ()
         *evID = (readoutPattern >> 16) & 0xffff; // upper 16 bit
         // evID++ not needed here, it's the last 16bit word
       }
-      
       // Check if end-of-run marker supplied and data storage enabled
       if((nevID & EExpEvIDEnd) && fIsStore ){
 	fIsRunTerm = kTRUE;
 	// if there are scaler on the system do a scaler read
-	/*
-	if(fNScaler){
-	  BuffStore(&out, EScalerBuffer);  // scaler-buffer marker
-	  if( IsMk2Format() ){
-	    scLen = (Int_t*)out;           // scaler-buffer size Mk2 only
-	    out = scLen + 1;               // update buffer ptr
-	  }
-	  nexts.Reset();
-	  while( ( mod = (TDAQmodule*)nexts() ) ) mod->ReadIRQScaler(&out);
+	//
+	//if(fNScaler){
+	//  BuffStore(&out, EScalerBuffer);  // scaler-buffer marker
+	//  if( IsMk2Format() ){
+	//    scLen = (Int_t*)out;           // scaler-buffer size Mk2 only
+	//    out = scLen + 1;               // update buffer ptr
+	//  }
+	//  nexts.Reset();
+	//  while( ( mod = (TDAQmodule*)nexts() ) ) mod->ReadIRQScaler(&out);
 	  // Scaler-block length & end of scaler block marker Mk2 data format
-	  if( IsMk2Format() ){
-	    *scLen = (Char_t*)out - (Char_t*)scLen;   // save buffer size
-	    BuffStore(&out, EScalerBuffer);           // scaler-end marker
-	  }
-	  scCnt = 0;                                  // reset scaler counter
-	  scEpicsFlag=kTRUE;// flag for epics that this was a scaler read event
-	}
-	*/
+	//  if( IsMk2Format() ){
+	//    *scLen = (Char_t*)out - (Char_t*)scLen;   // save buffer size
+	//    BuffStore(&out, EScalerBuffer);           // scaler-end marker
+	//  }
+	//  scCnt = 0;                                  // reset scaler counter
+	//  scEpicsFlag=kTRUE;// flag for epics that this was a scaler read event
+	//	}
       }
     }
+    */
     if(nevID>0 && nevID != (nevIDprev+1) )
       printf("nevID=%d  nevIDprev=%d\n",nevID,nevIDprev);
     nevIDprev = nevID;

@@ -6,7 +6,20 @@
 // Check plots of TAPS Veto spectra
 //
 
-CheckTAPSVeto(){
+
+
+void TAPSVetoClear(){
+	TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("VetoBaF2"));
+	t->ZeroAll();
+}
+
+CheckTAPSVeto(TCanvas* canv){
+	if(canv==NULL) {
+		TAPSVetoClear();
+		return;
+	}
+		
+	
   Char_t* hname[] = {
     "VetoBaF2_NADChits",
     "VetoBaF2_NTDChits",
@@ -32,9 +45,6 @@ CheckTAPSVeto(){
     "TAPS-Veto Time vs Hits",
   };
   TH1F* h1;
-  TCanvas* canv;
-  //
-  canv = new TCanvas("TAPS-Veto-Spectra","TAPS-Veto-Online",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(3,3,0.01,0.01);
   for( Int_t i=0; i<7; i++ ){
@@ -64,15 +74,4 @@ CheckTAPSVeto(){
     h2->Draw("COLZ");
   }
   return;
-}
-
-
-void TAPSVetoClear(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("VetoBaF2"));
-  t->ZeroAll();
-}
-
-void SaveTAPSVeto(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("VetoBaF2"));
-  t->SaveHist();
 }

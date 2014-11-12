@@ -12,7 +12,7 @@ BaseSetup:	0		4		NULL
 CAMAC-CNAF:	fffff	26	0	0	Init	
 CAMAC-CNAF:	0	16	0	0	Init	
 CAMAC-CNAF:	fffff	25	0	0	Init	
-CAMAC-CNAF:	90	17	0	0	Init
+CAMAC-CNAF:	64	17	0	0	Init
 ##
 #	End of File
 #

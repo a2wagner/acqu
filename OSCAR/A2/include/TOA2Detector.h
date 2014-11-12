@@ -1,5 +1,3 @@
-// SVN Info: $Id: TOA2Detector.h 1046 2012-01-13 16:58:28Z werthm $
-
 /*************************************************************************
  * Author: Dominik Werthmueller, 2008
  *************************************************************************/
@@ -50,7 +48,8 @@ public:
     static Int_t GetVetoInFrontOfElement(Int_t id, A2TAPSType_t type);
     static Int_t GetTAPSRing(Int_t id, A2TAPSType_t type);
     static Int_t GetTAPSBlock(Int_t id, A2TAPSType_t type);
- 
+    static Bool_t IsTAPSPWO(Int_t id, A2TAPSType_t type);
+
     ClassDef(TOA2Detector, 0)  // A2 detector class
 };
 

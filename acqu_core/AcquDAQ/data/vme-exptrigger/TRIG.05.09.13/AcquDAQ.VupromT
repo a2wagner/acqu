@@ -1,5 +1,5 @@
 ####
-Description: Polarised Pi0 Production, G & E observables
+Description: EPT production, 2014-07
 File-Name: scratch/CBTaggTAPS  32	500000	32768	ENet  32768  3030
 #File-Name: scratch/CBTaggTAPS  32	500000	32768	No-Store  32768  3030
 # Frequency            Scaler	Slow-Control
@@ -16,7 +16,7 @@ Module:	KPH_I686   kphi686_0	kphi686.dat		0	 0
 Module: GSI_VUPROM vup0         vuprom.trigT		ea000000 0   196 32 
 Module: GSI_VUPROM vup1         vuprom.patt     	ea000000 0   6 8
 Module: GSI_VUPROM vup2         vuprom.sca_coplan 	e8000000 196 32 32
-Module: GSI_VUPROM vup3         vuprom.sca_multi  	e7000000 224 32 32
+Module: GSI_VUPROM vup3         vuprom.sca_multi  	e7000000 228 32 32
 ## CB Hitpattern readout
 #	module	            Name    configFile
 #Module: GSI_VUPROM_Pattern  vup1a   vuprom.patt_cb     	e1000000 50   8 16

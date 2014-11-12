@@ -168,7 +168,7 @@ inline void TVME_CATCH::WrtCatch( UInt_t offset, UInt_t value )
   // This is to implement "extra" configs when trying to get everything in synch
   // as in the old config_tcs script run on lynxos systems
   Write( GetVirtAddr(offset), &value, 0x39, 4 );
-  usleep(1);
+  //usleep(1);
 }
 
 #endif

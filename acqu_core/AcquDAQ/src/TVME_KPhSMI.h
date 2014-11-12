@@ -7,7 +7,8 @@
 //--Rev         B. Oussena   6th Aug 2010  add  fNADC and fNScaler in ReadIRQ
 //--Rev         JRM Annand   4th Sep 2010  ReadIRQScaler....the name
 //--Rev         JRM Annand   9th Sep 2010  Slow read/write via usleep(1)
-//--Update      JRM Annand  14th Sep 2010  Scaler read..pipe suppress disabled
+//--Rev         JRM Annand  14th Sep 2010  Scaler read..pipe suppress disabled
+//--Update      JRM Annand  30th Mar 2014  Get rid of usleep in read/write
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***
@@ -23,6 +24,8 @@
 
 #include "TVMEmodule.h"
 #include "TFBmodule.h"
+
+enum{ EKPhSMITimeout = 200 };
 
 class TVME_KPhSMI : public TVMEmodule {
  protected:
@@ -41,32 +44,36 @@ class TVME_KPhSMI : public TVMEmodule {
   virtual void AddSMI(TDAQmodule*);
   virtual void ReadIRQ(void **);
   virtual void ReadIRQScaler(void  **);
+  virtual void Pause(){ for(Int_t i=0; i<EKPhSMITimeout; i++){i++;i--;}}
   ClassDef(TVME_KPhSMI,1)   
 
     };
-
 
 //-----------------------------------------------------------------------
 inline void TVME_KPhSMI::S_KPH( Int_t smi )
 {
   // Select SMI by offset in KPh register list
-  fSMIreg = (UShort_t**)fReg + smi*8; 
+  fSMIreg = (UShort_t**)fReg + smi*8;
 }
 
 //---------------------------------------------------------------------
 inline void TVME_KPhSMI::R_KPH(Int_t a, UShort_t *pdata)
 {
   // Read SMI register a
+  // a "pause" is necessary afterwards as the SMI-register bus is slow
   *pdata = *fSMIreg[a];
-  usleep(1);
+  Pause();
+  //usleep(1);
 }
 
 //-----------------------------------------------------------------------
 inline void TVME_KPhSMI::W_KPH( Int_t a, UShort_t data )
 {  
   // Write SMI register a
+  // a "pause" is necessary afterwards as the SMI-register bus is slow
   *fSMIreg[a] = data;
-  usleep(1);
+  Pause();
+  //usleep(1);
 }
 
 #endif

@@ -1,6 +1,20 @@
 // checks online analysis of MWPC
 
-CheckMWPC(){
+void MWPCClear(){
+	TA2Detector* s = (TA2Detector*)(gAN->GetGrandChild("Strips"));
+	TA2Detector* w = (TA2Detector*)(gAN->GetGrandChild("Wires"));
+	TA2Apparatus* a = (TA2Apparatus*)(gAN->GetChild("MWPC"));
+
+	if( s ) s->ZeroAll();
+	else printf("MWPC Strip detector class not found\n");
+	if( w ) w->ZeroAll();
+	else printf("MWPC Wire detector class not found\n");
+	if( a ) a->ZeroAll();
+	else printf("CB apparatus class not found\n");
+}
+
+
+CheckMWPC(TCanvas* canv){
   Char_t* hname[] = {
     "MWPC_Strips_Hits",
     "MWPC_Wires_Hits",
@@ -17,9 +31,6 @@ CheckMWPC(){
     "MWPC Wire No. of Hits",
   };
   TH1F* h1;
-  TCanvas* canv;
-  //
-  canv = new TCanvas("MWPC-Spectra","MWPC-Online",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(2,2,0.01,0.01);
   for( Int_t i=0; i<4; i++ ){
@@ -52,25 +63,3 @@ CheckMWPC(){
 }
 
 
-void MWPCClear(){
-  TA2Detector* s = (TA2Detector*)(gAN->GetGrandChild("Strips"));
-  TA2Detector* w = (TA2Detector*)(gAN->GetGrandChild("Wires"));
-  TA2Apparatus* a = (TA2Apparatus*)(gAN->GetChild("MWPC"));
-
-  if( s ) s->ZeroAll();
-  else printf("MWPC Strip detector class not found\n");
-  if( w ) w->ZeroAll();
-  else printf("MWPC Wire detector class not found\n");
-  if( a ) a->ZeroAll();
-  else printf("CB apparatus class not found\n");
-}
-
-void SaveMWPC(){
-   TA2Detector* s = (TA2Detector*)(gAN->GetGrandChild("Strips"));
-   TA2Detector* w = (TA2Detector*)(gAN->GetGrandChild("Wires"));
-   TA2Apparatus* a = (TA2Apparatus*)(gAN->GetChild("MWPC"));
- 
-   if(s) s->SaveAll();
-   if(w) w->SaveAll();
-   if(a) a->SaveAll();
-}

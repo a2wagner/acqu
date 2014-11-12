@@ -23,17 +23,17 @@ BaseSetup:	0		0		ADC    	    9000
 ## 
 Threshold: 0 90
 Threshold: 1 512
-Threshold: 2 65
+Threshold: 2 70
 Threshold: 3 512
 Threshold: 4 70
 Threshold: 5 512
 Threshold: 6 70
 Threshold: 7 512
-Threshold: 8 75
+Threshold: 8 74
 Threshold: 9 512
-Threshold: 10 75
+Threshold: 10 80
 Threshold: 11 512
-Threshold: 12 75
+Threshold: 12 74
 Threshold: 13 512
 Threshold: 14 80
 Threshold: 15 512

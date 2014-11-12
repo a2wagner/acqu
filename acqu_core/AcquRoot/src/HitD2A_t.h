@@ -224,7 +224,7 @@ inline Bool_t HitD2A_t::CheckTime( )
       *fTimeM[m] = (Double_t)ENullADC;
     else{
       if( !fNhit ) *fTime = time;             // time from 1st hit
-      *fTimeM[m] = time;                      // store all hit times
+      *fTimeM[fNhit] = time;                      // store all hit times
       fNhit++;                                // log # hits
     }
   }

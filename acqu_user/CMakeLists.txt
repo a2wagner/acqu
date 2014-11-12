@@ -8,15 +8,15 @@ include_directories("root/src" "root/src-mc" ${ACQU_USER_INCS})
 set(MOD "UserRoot")
 ROOT_PREPARE_LIB("root/src" "root/src" "root/src/UserLinkDef.h" "root/src/UserDict.cc" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
-target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS})
-set_target_properties("lib${MOD}" PROPERTIES LIBRARY_OUTPUT_NAME ${MOD})
+target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} Minuit)
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 
 set(MOD "MCUserRoot")
 ROOT_PREPARE_LIB("root/src-mc" "root/src-mc" "root/src-mc/MCUserLinkDef.h" "root/src-mc/MCDict.cc" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
 target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} libAcquMC libAcquRoot libAcquDAQ)
-set_target_properties("lib${MOD}" PROPERTIES LIBRARY_OUTPUT_NAME ${MOD})
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 # we add many additional files marked as "headers"
 # so they appear automatically in QtCreator
@@ -30,7 +30,10 @@ set(MOD "AcquRoot")
 add_executable(${MOD} "root/src/Main${MOD}.cc" ${ADDITIONAL_FILES})
 target_link_libraries(${MOD} libUserRoot)
 
+set(MOD "AcquHead")
+add_executable(${MOD} "root/src/Main${MOD}.cc")
+target_link_libraries(${MOD} ${ACQU_USER_LIBS} libUserRoot)
+
 set(MOD "AcquMC")
 add_executable(${MOD} "root/src-mc/Main${MOD}.cc")
 target_link_libraries(${MOD} libMCUserRoot)
-

@@ -2,7 +2,7 @@
 ##         HexBase #Registers ModuleType MapSize
 BaseSetup: 0       0          NULL       4000
 # firmware id of the VUPROM
-Hardware-ID: 02000021
+Hardware-ID: 02000023
 
 # what offsets for the "left" channel
 # and the pairs of the "right" channel?

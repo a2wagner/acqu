@@ -6,7 +6,6 @@ File-Name: scratch/AcquDAQ 32	5000000	32768 ENet  32768  3028
 Event-Counters:	10000		200000
 Start-Run: 0
 #
-#Control:  Slave    0     0
 #Control:   ENet	    localhost 4028
 #Control:   ENetSlave	    localhost 4028
 Control:  Slave    0     0
@@ -14,7 +13,7 @@ Control:  Slave    0     0
 #	module	   Name		configFile
 Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
 Module: KPH_VITEC   vit0        vitec_0.dat     0000    0       0
-#Module: CBD_8210   cbd0		cbd8210_0.dat	800000	0	0
+Module: CBD_8210   cbd0		cbd8210_0.dat	800000	0	0
 # ----------------------------------------	crate	station
 #Module: CAMAC	      a2_0	a2ctrl_0.dat	  1	30
 #Module: CAMAC	      vucam	vucam.trig	  1	1
@@ -26,16 +25,16 @@ Module: KPH_VITEC   vit0        vitec_0.dat     0000    0       0
 # following are added BY BAYA to set the delay
 #Module: LRS_2323      lrs_2323  lrs_2323.trig      1	15
 #
-# Microscope Electronics
-#Module: CAMAC	      a2_4	a2ctrl_0.dat	  4	30
-#Module: GSI_4800      uscal_0  		gsi_4800.dat0     4	20
-#Module: GSI_4800      uscal_1		gsi_4800.dat1     4	21
-#Module: CAMAC	      caen_208_A	caen_208.microA   4	4
-#Module: CAMAC	      caen_208_B	caen_208.microB   4	7
-#Module: CAMAC	      caen_208_C	caen_208.microC   4	10
-#Module: CAMAC	      caen_208_D	caen_208.microD	  4	13
-#Module: CAMAC	      caen_208_E	caen_208.microE	  4	16
-#Module: CAMAC	      caen_208_F	caen_208.microF	  4	19
+# Microscope/EPT Electronics
+Module: CAMAC	      a2_4	a2ctrl_0.dat	  4	30
+Module: GSI_4800      uscal_0  		gsi_4800.dat0     4	20
+Module: GSI_4800      uscal_1		gsi_4800.dat1     4	21
+Module: CAMAC	      caen_208_A	caen_208.EPT      4	4
+Module: CAMAC	      caen_208_B	caen_208.EPT      4	7
+Module: CAMAC	      caen_208_C	caen_208.EPT      4	10
+Module: CAMAC	      caen_208_D	caen_208.EPT	  4	13
+Module: CAMAC	      caen_208_E	caen_208.EPT	  4	16
+Module: CAMAC	      caen_208_F	caen_208.EPT	  4	19
 #
 # -----------------------------------------              fIndex  fNcha  Bits 
 Module: CATCH_TDC    cat0 	catchTDC.d 	e0300000  1400    128 	14

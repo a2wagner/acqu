@@ -127,11 +127,6 @@ function start() {
 
 function init() {
 
-    # init mode expects something to run
-    # and AcquManager expects that we stop it
-    # no matter if we really do an init (see skipping below)
-    stop 
-
     # with no force, check if we really need to init
     if [[ $FORCE = 0 && -f $INIT_PIDFILE ]]; then
         echo_log "AcquDAQ has already been initialized, skipping."

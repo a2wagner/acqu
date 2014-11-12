@@ -325,14 +325,6 @@ void TVME_V874::SetConfig( Char_t* line, Int_t key )
 //---------------------------------------------------------------------------
 void TVME_V874::ReadIRQ( void** outBuffer )
 {
-  // check via the readout pattern, if a readout is necessary at all
-  // this can speed up readout...
-  UInt_t readoutPattern = fEXP->GetSynchMod()->GetReadoutPattern();
-  if(((readoutPattern >> fNoOfModule) & 0x1) == 0) {
-    ResetData();
-    return;
-  }
-    
   // Read and decode the memory of the V874
   // Store the decoded ADC index and value in *outBuffer
   // Any detected errors in the data format are written into the data stream,
@@ -350,6 +342,14 @@ void TVME_V874::ReadIRQ( void** outBuffer )
     ResetData();
     return;
   }
+  // check via the readout pattern, if a readout is necessary at all
+  // this can speed up readout...
+  UInt_t readoutPattern = fEXP->GetSynchMod()->GetReadoutPattern();
+  if(((readoutPattern >> fNoOfModule) & 0x1) == 0) {
+    ResetData();
+    return;
+  }
+    
   if (!(status1 & 0x1)){
     //printf("No data in board - resetting\n");
     ErrorStore(outBuffer, EErrDataFormat);

@@ -1,5 +1,8 @@
 ## PWO and veto inner ring
 MultiADC:       3       29193   29319     29192
+# speed TAPS readout bitpatterns
+MultiADC:       1       410    493
+MultiADC:       1       10000    10100
 ##
 # TAPS bit pattern
 BitPattern: Pattern-TAPS.dat

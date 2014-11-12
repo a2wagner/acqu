@@ -4,7 +4,7 @@
 ##         HexBase #Registers ModuleType MapSize
 BaseSetup: 0       0          Scaler     14000
 # firmware id of the VUPROM
-Hardware-ID: 02000021
+Hardware-ID: 02000023
 
 # we define what is the first and the last module
 # (by name) in the chain of readout Vuproms 

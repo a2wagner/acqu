@@ -75,6 +75,7 @@ public:
   Bool_t IsProcess(){ return fIsProcess; }
 
   void SetIsStore(Bool_t state){ fIsStore = state; } // turn on/off storage
+  void ClearList(){ fNfile = 0; }
 
   ClassDef(TA2DataSource,1)       	// for ROOT
 };

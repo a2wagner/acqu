@@ -21,7 +21,8 @@
 //                                              in data merging
 //--Rev 	JRM Annand...    1st Mar 2013   More Mk2 merge debugging
 //--Rev 	JRM Annand...    6th Mar 2013   Add TA2TAPSMk2Format
-//--Update	JRM Annand...   18th Sep 2013   Start sources inc usleep 100-200
+//--Rev 	JRM Annand...   18th Sep 2013   Start sources inc usleep 100-200
+//--Update	JRM Annand...   29th Mar 2014   Merged data written at end-run 
 //
 //--Description
 //                *** Acqu++ <-> Root ***
@@ -55,7 +56,7 @@ enum {
   EDataSrvMk1, EDataSrvMk2, EDataSrvTAPS, EDataSrvTAPSMk2
 };
 // Basic Server setup keys
-static const Map_t kDataSrvKeys[] = {
+const Map_t TA2DataServer::kDataSrvKeys[] = {
   {"Input-Streams:",     EDataSrvInputStreams},
   {"Stream-Spec:",       EDataSrvStreamSpec},
   {"File-Name:",         EDataSrvFileName},
@@ -106,6 +107,7 @@ TA2DataServer::TA2DataServer( const Char_t* name, TAcquRoot* ar )
 
   if( !ar->InheritsFrom("TAcquRoot") )
     PrintError(" ","<Load AcquRoot ptr>",EErrFatal);
+  nStreamSpecs = 0;
   fAcquRoot = ar;
   fDataOutFile = NULL;
   fDataSource = NULL;
@@ -133,16 +135,12 @@ TA2DataServer::TA2DataServer( const Char_t* name, TAcquRoot* ar )
   fIsStore = EFalse;
   fIsSortLock = ETrue;
   fIsHeaderInit = EFalse;
-  Char_t* logfile;
   // Check batch log-file redirection
   if( fAcquRoot->IsBatch() ){
     if( fAcquRoot->GetBatchDir() )
-      logfile = BuildName(fAcquRoot->GetBatchDir(), "DataServer.log");
+      SetLogFile(BuildName(fAcquRoot->GetBatchDir(), "DataServer.log"));
   }
-  else logfile = BuildName("DataServer.log");
-  SetLogFile(logfile);
-  delete[] logfile;
-  return;
+  else SetLogFile(BuildName("DataServer.log"));
 }
 
 //-----------------------------------------------------------------------------
@@ -169,7 +167,7 @@ void TA2DataServer::SetConfig( Char_t* line, int key )
   UInt_t socketPort, recl, save, rsize, start, stop, swap, mid;
   Char_t name1[EMaxName];
   Char_t name2[EMaxName];
-  static Int_t n = 0;
+  Int_t n = nStreamSpecs; // shortcut
 
   switch( key ){
   case EDataSrvInputStreams:
@@ -281,7 +279,7 @@ void TA2DataServer::SetConfig( Char_t* line, int key )
     fSourceBuff[n] = new TA2RingBuffer( fDataSource[n]->GetBuffer() );
     fDataFormat[n]->SetLogStream( fLogStream );   // same log file  
     fDataFormat[n]->Initialise( fHeaderBuff, fSortBuff, fSourceBuff[n], mid );
-    n++;                                // for next possible source channel
+    nStreamSpecs++;                               // for next possible source channel
     break;
   case EDataSrvFileName:
     // Input file specification source=name, start record, stop record
@@ -486,6 +484,17 @@ void TA2DataServer::MultiProcess()
 	finished = ETrue;
       case EEndBuff:
 	PrintMessage("End of run detected\n");
+	// If data storage enabled
+	// Check if anything left in the merged output buffer
+	// Write it to merged file....JRMA 29/3/14
+	if( fIsStore ){
+	  UInt_t* bStart = (UInt_t*)(fSortBuff->GetStore());
+	  if( fOutBuff > (bStart + 1) ){
+	    *fOutBuff = EBufferEnd;
+	    fOutBuff = NULL; 
+	    fDataOutFile->WriteBuffer(fSortBuff->GetStore(),fRecLen);
+	  }
+	}
 	// Check that the other data sources have reached the end-of-file
 	// state....flush any extraneous data buffers from these sources
 	FlushBuffers();

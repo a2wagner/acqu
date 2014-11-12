@@ -7,7 +7,7 @@
 
 ##              Hex Base	#Registers	Module type	MapSize  <-- Baya Added MapSize
 BaseSetup:	0		0		Scaler		4000
-Hardware-ID: 0100007c
+Hardware-ID: 0100007e
 #
 Enable-CPU: 27ff
 #
@@ -31,6 +31,7 @@ Input-Mask: 1
 L1-Width: 14
 Strobe-Delay: 0 8
 Enable-TAPS: 0
+#Set-Debug-Out: 3 65
 Helicity-Inhibit: 0
 Set-M-Threshold: 0 1 2 3
 L2-Prescale: 65535 0 0 0 0 0 0 0

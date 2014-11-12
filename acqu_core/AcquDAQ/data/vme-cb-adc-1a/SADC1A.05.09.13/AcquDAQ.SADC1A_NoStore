@@ -17,7 +17,6 @@ Module: KPH_VITEC   vit0	vitec_0.dat	000	0	0
 #Module: SIS_3820   sis0	sis_0.dat	f8000000 0 0 16
 # ----------------------------------------	crate	station
 Module: GeSiCA    ges1 	GeSiCA.CB2 	dd1000  3352    192 	13
-#Module: GeSiCA    ges2 	GeSiCA.CB3 	dd2000  3544    192	13
 #
 ## Interrupt control module
 IRQ-Ctrl: vit0

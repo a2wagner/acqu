@@ -6,7 +6,17 @@
 // Check plots of TAPS PbWO4 spectra
 //
 
-void CheckTAPSPbWO4(){
+void TAPSPbWO4Clear(){
+	TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PbWO4"));
+	t->ZeroAll();
+}
+
+void CheckTAPSPbWO4(TCanvas* canv){
+	if(canv==NULL) {
+		TAPSPbWO4Clear();
+		return;
+	}
+	
   Char_t* hname[] = {
     "PbWO4_NADChits",
     "PbWO4_NTDChits",
@@ -39,9 +49,7 @@ void CheckTAPSPbWO4(){
   };
 
   TH1F* h1;
-  TCanvas* canv;
-  //
-  canv = new TCanvas("TAPS-PbWO4-Spectra","TAPS-PbWO4-Online",240,180,1240,890);
+
   canv->SetFillStyle(4000);
   canv->Divide(3,4,0.01,0.01);
   for( Int_t i=0; i<8; i++ ){
@@ -74,12 +82,3 @@ void CheckTAPSPbWO4(){
 }
 
 
-void TAPSPbWO4Clear(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PbWO4"));
-  t->ZeroAll();
-}
-
-void SaveTAPSPbWO4(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PbWO4"));
-  t->SaveHist();
-}

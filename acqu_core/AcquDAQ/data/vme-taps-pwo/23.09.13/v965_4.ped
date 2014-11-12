@@ -21,35 +21,35 @@ BaseSetup:	0		0		ADC    	    9000
 ## Thresholds low limit corresponds to the ADC channel.
 ## Set Threshold to 512 (2x256) to disable channel
 ## 
-Threshold: 0 75
+Threshold: 0 80
 Threshold: 1 512
-Threshold: 2 75
+Threshold: 2 80
 Threshold: 3 512
-Threshold: 4 85
+Threshold: 4 84
 Threshold: 5 512
 Threshold: 6 80
 Threshold: 7 512
 Threshold: 8 100
 Threshold: 9 512
-Threshold: 10 75
+Threshold: 10 80
 Threshold: 11 512
 Threshold: 12 90
 Threshold: 13 512
-Threshold: 14 85
+Threshold: 14 84
 Threshold: 15 512
-Threshold: 16 75
+Threshold: 16 74
 Threshold: 17 512
-Threshold: 18 75
+Threshold: 18 70
 Threshold: 19 512
-Threshold: 20 85
+Threshold: 20 84
 Threshold: 21 512
 Threshold: 22 80
 Threshold: 23 512
 Threshold: 24 80
 Threshold: 25 512
-Threshold: 26 75
+Threshold: 26 76
 Threshold: 27 512
 Threshold: 28 80
 Threshold: 29 512
-Threshold: 30 75
+Threshold: 30 76
 Threshold: 31 512

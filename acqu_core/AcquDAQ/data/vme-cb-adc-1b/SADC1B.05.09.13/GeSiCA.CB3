@@ -28,69 +28,71 @@
 ##---------------------------------------------------------------------------
 # Memory mapping for VMEbus controller
 CatchMapSize: 1000
-*
-* You have to set this parameter first!
-*
+#
+# You have to set this parameter first!
+#
 NADCBoards:	6
-*
-* Code file for IMUX (GeSiCA) FPGA
-* "Cold start" only
+#
+# Code file for IMUX (GeSiCA) FPGA
+# "Cold start" only
 GeSiCAFile: ./data/FPGA/hgsca6_3.rbt
-*
-* Code file for SADC FPGA
-* "Cold start" only
-* Firmware for "normal" 3-sum readout:    (AcquMode 3)
-SADCFile:   ./data/FPGA/i_adc_mainz_100.rbt
-* Firmware for 2-sum readout:
-*SADCFile:     ./data/FPGA/i_adc_mainz_102_sum01.rbt
-* Firmware for 1-sum readout:
-*SADCFile:     ./data/FPGA/i_adc_mainz_102_diff10.rbt
-*
-* Configuration of readout mode
-* Mode = 0 no data suppression, samples & 3 sums read
-* Latch readout works up to 84 samples, but workstation crashes at
-* more than 24 samples from 7 boards.
-* Mode = 1 sparsified data, 3 sums read for channels over threshold
-* Latency delay on incoming ADC signal (in number of clock samples)
-* Nsamples is the number of samples to read
-* AcquMode:
-* ESG_SINGLE 1 (Save pedestal subtracted signal only)
-* ESG_TRIPLE 3 (Save the 3 sums calculated by the SG-ADC)
-* ESG_SAMPLE 4 (Save the flash-ADC samples)
-* ESG_ALL    5 (Save the samples + 3 sum outputs)
-* ESG_SUM_1  6 (ADC delivers only one sum. Save it.)
-* ESG_SUM_01 7 (ADC delivers sum 0 and sum 1. Save them.
-*
-*		Mode	Latency		Nsamples	AcquMode
-*GeSiCAMode:	0	72		24		5
-* Reduce latency to by 8 to compensate for TCS trigger coming 212ns earlier
-* Reduce latency to by 10 to compensate for TCS trigger coming 250ns earlier
-*GeSiCAMode:	1	64		90		3
-*GeSiCAMode:	1	62		90		3
-* Increase latency by 22 to compensate for trigger coming 550ns later - EJD 19.02.10
-GeSiCAMode:	1	69		90		3
-* Testing the new firmware-versions
-*GeSiCAMode:	1	62		90		6
-*
-* Integration of samples...
-* start sample channel and #sample channels to add for
-* Sum-0 pedestal region
-* Sum-1 signal region
-* Sum-2 tail region
-*		start0	nchan0	start1	nchan1	start2	nchan2
+#
+# Code file for SADC FPGA
+# "Cold start" only
+# Firmware for "normal" 3-sum readout:    (AcquMode 3)
+#SADCFile:   ./data/FPGA/i_adc_mainz_100.rbt
+SADCFile:   ./data/FPGA/i_adc_mainz_20140327_0.rbt
+#
+# Firmware for 2-sum readout:
+#SADCFile:     ./data/FPGA/i_adc_mainz_102_sum01.rbt
+# Firmware for 1-sum readout:
+#SADCFile:     ./data/FPGA/i_adc_mainz_102_diff10.rbt
+#
+# Configuration of readout mode
+# Mode = 0 no data suppression, samples & 3 sums read
+# Latch readout works up to 84 samples, but workstation crashes at
+# more than 24 samples from 7 boards.
+# Mode = 1 sparsified data, 3 sums read for channels over threshold
+# Latency delay on incoming ADC signal (in number of clock samples)
+# Nsamples is the number of samples to read
+# AcquMode:
+# ESG_SINGLE 1 (Save pedestal subtracted signal only)
+# ESG_TRIPLE 3 (Save the 3 sums calculated by the SG-ADC)
+# ESG_SAMPLE 4 (Save the flash-ADC samples)
+# ESG_ALL    5 (Save the samples + 3 sum outputs)
+# ESG_SUM_1  6 (ADC delivers only one sum. Save it.)
+# ESG_SUM_01 7 (ADC delivers sum 0 and sum 1. Save them.
+#
+#		Mode	Latency		Nsamples	AcquMode
+#GeSiCAMode:	0	72		24		5
+# Reduce latency to by 8 to compensate for TCS trigger coming 212ns earlier
+# Reduce latency to by 10 to compensate for TCS trigger coming 250ns earlier
+#GeSiCAMode:	1	64		90		3
+#GeSiCAMode:	1	62		90		3
+# Increase latency by 22 to compensate for trigger coming 550ns later - EJD 19.02.10
+GeSiCAMode:	5	69		90		6
+# Testing the new firmware-versions
+#GeSiCAMode:	1	62		90		6
+#
+# Integration of samples...
+# start sample channel and #sample channels to add for
+# Sum-0 pedestal region
+# Sum-1 signal region
+# Sum-2 tail region
+#		start0	nchan0	start1	nchan1	start2	nchan2
 SADCSum:        0	30	30	30	60	30
-*SADCSum:        10	20	34	20	60	20
-*
-*
-* Thresholds for SADC data suppression
-* in "sum only mode" channel [i] gets suppressed
-* if Sum-1 - Sum-0 < Threshold.
-* Command-line syntax:
-* SADC is the GeSiCA fibre-optic port (1-8) connected to the SADC
-* Chan is the SADC channel (1-32)
-* Thresh is the Threshold
-*
-*		 SADC  Chan    Thresh
+#SADCSum:        10	20	34	20	60	20
+#
+#
+# Thresholds for SADC data suppression
+# in "sum only mode" channel [i] gets suppressed
+# if Sum-1 - Sum-0 < Threshold.
+# Command-line syntax:
+# SADC is the GeSiCA fibre-optic port (1-8) connected to the SADC
+# Chan is the SADC channel (1-32)
+# Thresh is the Threshold
+#
+#		 SADC  Chan    Thresh
 SADCThreshold:	 0	 0	15
 SADCThreshold:	 0	 1	15
 SADCThreshold:	 0	 2	15
@@ -123,7 +125,7 @@ SADCThreshold:	 0	28	15
 SADCThreshold:	 0	29	15
 SADCThreshold:	 0	30	15
 SADCThreshold:	 0	31	15
-*
+#
 SADCThreshold:	 1	 0	15
 SADCThreshold:	 1	 1	15
 SADCThreshold:	 1	 2	15
@@ -156,7 +158,7 @@ SADCThreshold:	 1	28	15
 SADCThreshold:	 1	29	15
 SADCThreshold:	 1	30	15
 SADCThreshold:	 1	31	15
-*
+#
 SADCThreshold:	 2	 0	15
 SADCThreshold:	 2	 1	15
 SADCThreshold:	 2	 2	15
@@ -189,7 +191,7 @@ SADCThreshold:	 2	28	15
 SADCThreshold:	 2	29	15
 SADCThreshold:	 2	30	15
 SADCThreshold:	 2	31	15
-*
+#
 SADCThreshold:	 3	 0	15
 SADCThreshold:	 3	 1	15
 SADCThreshold:	 3	 2	15
@@ -222,7 +224,7 @@ SADCThreshold:	 3	28	15
 SADCThreshold:	 3	29	15
 SADCThreshold:	 3	30	15
 SADCThreshold:	 3	31	15
-*
+#
 SADCThreshold:	 4	 0	15
 SADCThreshold:	 4	 1	15
 SADCThreshold:	 4	 2	15
@@ -255,7 +257,7 @@ SADCThreshold:	 4	28	15
 SADCThreshold:	 4	29	15
 SADCThreshold:	 4	30	15
 SADCThreshold:	 4	31	15
-*
+#
 SADCThreshold:	 5	 0	15
 SADCThreshold:	 5	 1	15
 SADCThreshold:	 5	 2	15
@@ -288,4 +290,4 @@ SADCThreshold:	 5	28	15
 SADCThreshold:	 5	29	15
 SADCThreshold:	 5	30	15
 SADCThreshold:	 5	31	15
-*
+#

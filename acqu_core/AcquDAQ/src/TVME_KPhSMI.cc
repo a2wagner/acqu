@@ -7,7 +7,8 @@
 //--Rev         B. Oussena   6th Aug 2010  add  fNADC and fNScaler in ReadIRQ
 //--Rev         JRM Annand   4th Sep 2010  ReadIRQScaler....the name
 //--Rev         JRM Annand   9th Sep 2010  Slow read/write via usleep(1)
-//--Update      JRM Annand  14th Sep 2010  Scaler read..pipe suppress disabled
+//--Rev         JRM Annand  14th Sep 2010  Scaler read..pipe suppress disabled
+//--Update      JRM Annand  30th Mar 2014  Get rid of usleep in read/write
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***

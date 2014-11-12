@@ -3,7 +3,7 @@
 #
 ## Specify list of detectors which constitute the Crystal Ball apparatus
 Detector: BaF2         TA2TAPS_BaF2		Detector-BaF2.dat 
-Detector: PbWO4        TA2PlasticPID		Detector-PbWO4_S.dat
+Detector: PbWO4        TA2PlasticPID		Detector-PbWO4.dat
 Detector: VetoBaF2     TA2PlasticPID		Detector-Veto.dat
 ##
 ## Data reconstruction method for Crystal Ball 

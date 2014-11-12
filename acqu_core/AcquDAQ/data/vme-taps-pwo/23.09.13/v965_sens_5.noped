@@ -18,21 +18,21 @@ High-Thr-Range:
 ## Set Threshold to 4096 (16x256) to disable the channel.
 ##
 Threshold: 0 4096
-Threshold: 1 736
+Threshold: 1 784
 Threshold: 2 4096
-Threshold: 3 608
+Threshold: 3 656
 Threshold: 4 4096
-Threshold: 5 624
+Threshold: 5 656
 Threshold: 6 4096
-Threshold: 7 640
+Threshold: 7 672
 Threshold: 8 4096
-Threshold: 9 656
+Threshold: 9 704
 Threshold: 10 4096
-Threshold: 11 672
+Threshold: 11 736
 Threshold: 12 4096
-Threshold: 13 656
+Threshold: 13 704
 Threshold: 14 4096
-Threshold: 15 720
+Threshold: 15 752
 Threshold: 16 4096
 Threshold: 17 4096
 Threshold: 18 4096
@@ -46,6 +46,6 @@ Threshold: 25 4096
 Threshold: 26 4096
 Threshold: 27 4096
 Threshold: 28 4096
-Threshold: 29 656
+Threshold: 29 720
 Threshold: 30 4096
-Threshold: 31 656
+Threshold: 31 720

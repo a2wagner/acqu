@@ -37,7 +37,7 @@ enum { EVUP_EnCPU=200, EVUP_IntDelay, EVUP_FCDelay, EVUP_RAMDownload,
        EVUP_InputMask, EVUP_InputPrescale, EVUP_L1Prescale, EVUP_L2Prescale,
        EVUP_EnPattRead, EVUP_EnScalerRead, EVUP_SetDebug, EVUP_L1Width,
        EVUP_SetDelay, EVUP_EnableTAPS, EVUP_HelicityInhibit, EVUP_SetMThresh, 
-       EVUP_GUIpermit, EVUP_RefTDCWidth };
+       EVUP_GUIpermit, EVUP_RefTDCWidth, EVUP_ResetTrigCtrl };
 static Map_t kVUPROMKeys[] = {
   {"Enable-CPU:",         EVUP_EnCPU},
   {"Int-Delay:",          EVUP_IntDelay},
@@ -57,6 +57,7 @@ static Map_t kVUPROMKeys[] = {
   {"Set-M-Threshold:" ,   EVUP_SetMThresh},
   {"GUI-permit:" ,        EVUP_GUIpermit},
   {"RefTDC-Width:" ,      EVUP_RefTDCWidth},
+  {"ResetTrigCtrl:" ,     EVUP_ResetTrigCtrl},
   {NULL,                  -1}
 };
 
@@ -840,6 +841,10 @@ void TVME_VUPROM::CmdExe(Char_t* input)
     }      
     SetMThresh(i, j);
     sprintf(fCommandReply,"Multiplicity channel %d: threshold set to %d\n",i,j);
+    break;
+  case EVUP_ResetTrigCtrl:
+    ResetTrigCtrl();
+    sprintf(fCommandReply, "ResetTrigCtrl executed.\n");
     break;
   default:
     sprintf(fCommandReply,"<Unrecognised VUPROM command>\n");

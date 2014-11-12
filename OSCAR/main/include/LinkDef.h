@@ -46,6 +46,7 @@
 #pragma link C++ class TOA2DetParticle+; 
 #pragma link C++ class TOA2RecParticle+; 
 #pragma link C++ class TOA2RecMultiParticle+; 
+#pragma link C++ class TOA2PSA+; 
 
 // Module Analysis
 #pragma link C++ namespace TOPhysics; 

@@ -16,11 +16,10 @@ Control:   ENetSlave	    localhost 4026
 #	module	   Name		configFile
 Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
 #Module: GSI_VUPROM vup2         vuprom_evID.d  eb000000 0 0 32 
-Module: CBD_8210   cbd0		cbd8210_0.dat	800000	0	0
 Module: KPH_VITEC   vit0	vitec_0.dat	0000	0	0
-#
+Module: CBD_8210   cbd0		cbd8210_0.dat	800000	0	0
+## CBD_8210 should immediately precede CAMAC list
 #----------------------------------------	crate	station
-Module: CAMAC	      a2_1	a2ctrl_0.dat	  2	30
 Module: CAMAC	      a2_2	a2ctrl_0.dat	  3	30
 Module: CAMAC	      pid0	lrs_4413.pid	  3	22
 Module: CAMAC	      pid1	lrs_4413.pid	  3	23

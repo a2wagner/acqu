@@ -6,7 +6,10 @@
 // Check plots of TAPS Veto spectra
 //
 
-CheckTrigger(){
+CheckTrigger(TCanvas* canv){
+	if(canv==NULL)
+		return;
+	
   Char_t* hname[] = {
     "Trigger",
     "MAMIHelicity",
@@ -51,10 +54,7 @@ CheckTrigger(){
   };
   Int_t log[] = { 1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
   Int_t col[] = { 4,4,4,4,2,2,2,2,5,5,5,5,3,3,3,3,2,2,2,2,5,5,5 };
- //
   TH1F* h1;
-  TCanvas* canv;
-  canv = new TCanvas("Scaler-Spectra","Scaler Spectra & Synchronisation",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(4,4,0.01,0.01);
   for( Int_t i=0; i<15; i++ ){
@@ -76,13 +76,4 @@ CheckTrigger(){
     h2->GetXaxis()->SetTitle(xname2[i]);
     h2->Draw("COLZ");
   }
-}
-
-
-void TriggerClear(){
-  printf("Not yet implemented\n");
-}
-
-void SaveTrigger(){
-  printf("Not yet implemented\n");
 }

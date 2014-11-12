@@ -6,7 +6,21 @@
 // Check plots of Microscope spectra
 //
 
-CheckMicro(){
+
+
+void MicroClear(){
+	TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("Micro"));
+	t->ZeroAll();
+}
+
+
+
+CheckMicro(TCanvas* canv){
+	if(canv==NULL) {
+		MicroClear();
+		return;
+	}
+	
   Char_t* hname[] = {
     "Micro_Nhits",
     "Micro_NhitsPrompt",
@@ -38,9 +52,6 @@ CheckMicro(){
     "Microscope Time vs Hits",
   };
   TH1F* h1;
-  TCanvas* canv;
-  //
-  canv = new TCanvas("Micro-Spectra","Micro-Online",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(3,4,0.01,0.01);
   for( Int_t i=0; i<10; i++ ){
@@ -69,15 +80,4 @@ CheckMicro(){
     h2->Draw("COLZ");
   }
   return;
-}
-
-
-void MicroClear(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("Micro"));
-  t->ZeroAll();
-}
-
-void SaveMicro(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("Micro"));
-  t->SaveHist();
 }

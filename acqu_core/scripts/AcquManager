@@ -57,7 +57,7 @@ $runsets->{CBTaggTAPS} =
                ['vme-taps-veto-ab', 'VetoAB'],
                ['vme-taps-veto-cd', 'VetoCD' ],
                ['vme-taps-veto-ef', 'VetoEF'],
-               ['vme-taps-pwo',     'PbWO4.Sens'],
+               ['vme-taps-pwo',     'PbWO4'],
                ['vme-beampolmon',   'BEAM']
               ],
    'TCS' => undef # a bit unnecessary for the whole system
@@ -101,7 +101,7 @@ $runsets->{TAPS} = MakePedRunset(
                ['vme-taps-veto-ab', 'VetoAB'],
                ['vme-taps-veto-cd', 'VetoCD' ],
                ['vme-taps-veto-ef', 'VetoEF'],
-               ['vme-taps-pwo',     'PbWO4.Sens'],
+               ['vme-taps-pwo',     'PbWO4_standalone'],
               ],
    'TCS' => undef # TAPS does not know about TCS...
   });
@@ -114,7 +114,7 @@ $runsets->{TAPSPulser}->{Hosts}->[0]->[1] = 'MasterP';
 $runsets->{TaggEff} =
   {
    'Description' => 'Tagging efficiency setup without TAPS or CB',
-   'DefaultTriggerId' => 23,
+   'DefaultTriggerId' => 74,
    'Hosts' => [
                ['vme-exptrigger',   'TaggEff'], # first, the host where the AcquDAQ GUI is started
                ['vme-tagg-tdc-a',   'TAGGA'],
@@ -182,8 +182,6 @@ my $statusToString =
 my $trigger_baseurl = 'http://wwwa2.kph.uni-mainz.de/intern/trigger';
 my $acqu_datadir = '$HOME/acqu/data'; # were to find the data dir on VME hosts
 my $AcquBin = '/opt/acqu/build/bin'; # where can we find RSupervise, AcquControl, ...
-my $InitTriggerId = 73; # trigger providing some interrupts
-my $InitCPUEnable = '0x2000'; # the correct CPU Enable for init (all hosts disabled)
 
 Getopt::Long::Configure(qw(gnu_getopt));
 GetOptions(
@@ -204,6 +202,11 @@ pod2usage(-exitval => 0, -verbose => 2) if $man;
 if ($verbose) {
   # always enable warnings if verbose
   $warnings = 1;
+}
+
+if($force && $warnings) {
+  Logger("YOU ARE USING FORCE (-f, --force), DO NOT USE THIS WITHOUT REASON!",-1);
+  Logger("FORCE disables all checks which can prevent bad things!",-1); 
 }
 
 # syslog prefix
@@ -282,6 +285,9 @@ sub StartAcquDAQ {
 
   my $xauth = `xauth list $ENV{DISPLAY}`;
   Logger("Xauth: $xauth",3);
+  if($xauth =~ /^\s*$/) {
+    Logger("Xauth is empty. Check if daq-master disk is full, and relogin to daq-master");
+  }
 
   # this opens the SSH sessions in $r->{SSH}, if not already done
   InitSSH($r);
@@ -623,13 +629,6 @@ sub Init {
   my $prefix = '== Init:';
 
   # first of all, the TCS must be initialized
-  # we start the AcquDAQ process on the TCS host,
-  # which is stopped again by the following init
-  Logger("$prefix Starting AcquDAQ on $host_tcs (just for checking)",1);
-  StartAcquDAQ($runset, 'start',
-               [],               # blacklist none, since we...
-               [$host_tcs]       # ...whitelist only TCS host
-              );
   Logger("$prefix Initializing TCS (and TDCs) on '$host_tcs'. ".
          "Be patient (takes about one minute to finish!)",1);
   StartAcquDAQ($runset, '-t 80 init', # give it 80 s to finish
@@ -637,26 +636,9 @@ sub Init {
                [$host_tcs]            # ...whitelist only TCS host
               );
 
-  # get the old trigger in NoStore mode
-  my ($trigid_old, undef, undef) = TriggerGuessId($runset);
-  Logger("$prefix Current trigger ID: $trigid_old (will be restored in the end)",1);
-
-  # activate the special trigger needed for programming the GeSiCas
-  # and register the callback to properly restore it if something fails
-  Logger("$prefix Activating specific trigger $InitTriggerId",1);
-  EnsureOptIsMounted($host_gui); # don't forget to make /opt writeable
-  TriggerSetup($runset, $InitTriggerId);
-  push(@$cleanup,
-       sub {
-         # never use force to restore the trigger
-         $force=0;
-         Logger("$prefix Cleanup: Trying to restore the old trigger $trigid_old",1);
-         TriggerSetup($runset, $trigid_old);
-         });
-
   # start the whole runset in NoStore mode
-  # (this can fail since we base it on the existing config)
-  # but we use a modified config file, which let's us remotely control
+  # (this might fail since we base it on the existing config)
+  # we use a modified config file, which let's us remotely control
   # the AcquDAQ experiment via RSupervise
   Logger("$prefix Creating specific config file for $host_gui based on current one", 1);
   my $datfile = GenerateArgument($h)->[$nostore];
@@ -664,6 +646,8 @@ sub Init {
   my $datfile_init = GenerateArgument($h)->[$nostore]; # ..then get the new filename
   # the "Control:" option makes AcquDAQ listen locally (similar to the instance on vme-tagg-tdc-b)
   my $cfg = { 'Control' => 'ENet localhost 4029' };
+
+  EnsureOptIsMounted($host_gui); # don't forget to make /opt writeable
   MakeAcquDAQConfigFile($ssh_gui,
                         "$acqu_datadir/$datfile",
                         "$acqu_datadir/$datfile_init",
@@ -672,39 +656,40 @@ sub Init {
                        );
 
   # now start with the modified TAG from above
-  Logger("$prefix Starting all AcquDAQ processes in NoStore mode, but $host_gui with Init config.",1);
-
-  StartAcquDAQ($runset);
-
-  # now, set the proper CPU Enable and do Go:
-  # Note that Start:/Run: is not correct and Go: issues an
-  # TCS Reset at the beginning!
-  # Remember: Once we close this RSupervise connection, AcquDAQ crashes!
-  Logger("$prefix Setting CPUEnable $InitCPUEnable, issueing Go: via RSupervise",1);
-  my $supervise_gui =
-    DoRSupervise($ssh_gui,
-                 sprintf('VUPROM: Enable-CPU: %d', hex($InitCPUEnable)),
-                 'Go:'
-                );
-  Logger("$prefix DAQ has been started. Checking trigger rate.",1);
-  CheckTriggerRate();
-
-  # now, with an working TCS and interrupts, we can initialize the
-  # all the remaining modules
-  Logger("$prefix Initializing all hosts of runset in parallel (except $host_gui and $host_tcs). ".
-         "Be patient (takes about four minutes to finish!)",1);
-  StartAcquDAQ($runset, '-t 240 init', # give it 240 s to finish
-               [$host_gui, $host_tcs], # blacklist the GUI and TCS host
-               [] # whitelist defaults to empty, just for completeness
+  Logger("$prefix Starting AcquDAQ in NoStore mode on $host_tcs and on $host_gui with Init config.",1);
+  StartAcquDAQ($runset, 'start',
+               [],               # blacklist none, since we...
+               [$host_tcs, $host_gui]       # ...whitelist only TCS/GUI host
               );
 
-  Logger("$prefix Checking trigger rate again (should still run).",1);
-  CheckTriggerRate();
-
-
-  Logger("$prefix Issueing ConfigTCS: on $host_tcs via RSupervise",1);
+  # connect to the TCS controller and set the run mode to 0
+  # this is very important for the GeSiCa to gain a TCS lock reliably!
+  Logger("$prefix Set TCS run mode to disable on $host_tcs via RSupervise",1);
   my $supervise_tcs =
-    DoRSupervise($ssh_tcs, 'ConfigTCS:');
+    DoRSupervise($ssh_tcs, 'SetTCSRunMode: 0');
+  
+  # issue a TCS EOS/BOS sequence to make the run mode take effect
+  Logger("$prefix Issue EOS/BOS TCS sequence on $host_gui via RSupervise",1);
+  my $supervise_gui =
+    DoRSupervise($ssh_gui,'VUPROM: ResetTrigCtrl:');
+
+  # now, with a TCS in idle mode, we can initialize the
+  # all the remaining modules in parallel
+  Logger("$prefix Initializing all hosts of runset in parallel (except $host_gui and $host_tcs). ",1);
+  StartAcquDAQ($runset, '-t 240 init', # give it 240 s to finish
+               [$host_gui, $host_tcs], # blacklist the GUI and TCS host
+               [] # whitelist defaults to empty, here just for completeness
+              );
+
+  # enable the TCS run mode again
+  Logger("$prefix Set TCS run mode to enable on $host_tcs via RSupervise",1);
+  DoRSupervise($supervise_tcs, 'SetTCSRunMode: 1');
+  Logger("$prefix Issue EOS/BOS TCS sequence on $host_gui via RSupervise",1);
+    DoRSupervise($supervise_gui,'VUPROM: ResetTrigCtrl:');
+
+  # issue ConfigTCS:, seems to be needed after reprogramming the TCS module
+  Logger("$prefix Issueing ConfigTCS: on $host_tcs via RSupervise",1);
+  DoRSupervise($supervise_tcs, 'ConfigTCS:');
 
   # now, all AcquDAQ sessions should be exited except on $host_gui and $host_tcs
   Logger("$prefix Stopping the last standing AcquDAQs on $host_gui and $host_tcs. ",1);
@@ -817,65 +802,73 @@ sub CheckTriggerRate {
 }
 
 sub DoRSupervise {
-  my $ssh = shift;
+  my $ssh_or_exp = shift;
   my @cmds = @_;
 
-  # fiddle out the port AcquDAQ is listening on
-  # this also checks if AcquDAQ is properly running
-  my $tries = $retry;
-  my @lines;
-  while(1) {
-    @lines = $ssh->capture({stderr_discard=>1}, # netstat outputs warnings if run non-root...
-                           "netstat -anp | grep AcquDAQ");
-    if(@lines == 0 && $tries>0) {
-      $tries--;
-      sleep 1;
-      next;
-    }
-    elsif(@lines == 1) {
-      last;
-    }
-    else {
-      Logger("AcquDAQ on '".$ssh->get_host."' does not listen on exactly one port after $retry retries. ".
-             "Maybe AcquDAQ could not be started?");
-    }
-  }
+  my $exp;
 
-  my @cols = split(/\s+/,$lines[0]);
-  if($cols[5] ne 'LISTEN') {
-    Logger("AcquDAQ on '".$ssh->get_host."' does not listen on the port. ".
-           "Check with `netstat -anp | grep AcquDAQ`.");
-  }
-  # get the local port
-  my (undef, $port) = split(/:/,$cols[3]);
-
-  Logger("Found AcquDAQ listening on port $port",2);
-
-  my ($pty, $pid) = $ssh->open2pty("$AcquBin/RSupervise localhost $port")
-    or die "Cannot start RSupervise on port $port: ".$ssh->error;
-  my $exp = Expect->init($pty);
   my $timeout = 5;
-  #$exp->debug(1);
-  #$exp->log_stdout(1);
-  $exp->raw_pty(1);
-
-
   my $prompt = 'AcquDAQ>';
+
+
+  if(ref($ssh_or_exp) eq 'Net::OpenSSH') {
+    my $ssh = $ssh_or_exp;
+    # fiddle out the port AcquDAQ is listening on
+    # this also checks if AcquDAQ is properly running
+    my $tries = $retry;
+    my @lines;
+    while (1) {
+      @lines = $ssh->capture({stderr_discard=>1}, # netstat outputs warnings if run non-root...
+                             "netstat -anp | grep AcquDAQ");
+      if (@lines == 0 && $tries>0) {
+        $tries--;
+        sleep 1;
+        next;
+      } elsif (@lines == 1) {
+        last;
+      } else {
+        Logger("AcquDAQ on '".$ssh->get_host."' does not listen on exactly one port after $retry retries. ".
+               "Maybe AcquDAQ could not be started?");
+      }
+    }
+
+    my @cols = split(/\s+/,$lines[0]);
+    if ($cols[5] ne 'LISTEN') {
+      Logger("AcquDAQ on '".$ssh->get_host."' does not listen on the port. ".
+             "Check with `netstat -anp | grep AcquDAQ`.");
+    }
+    # get the local port
+    my (undef, $port) = split(/:/,$cols[3]);
+
+    Logger("Found AcquDAQ listening on port $port",2);
+
+    my ($pty, $pid) = $ssh->open2pty("$AcquBin/RSupervise localhost $port")
+      or die "Cannot start RSupervise on port $port: ".$ssh->error;
+    $exp = Expect->init($pty);
+    $exp->raw_pty(1);
+    #$exp->debug(1);
+    #$exp->log_stdout(1);
+
+    # wait for RSupervise to show the prompt
+    Logger("Waiting for RSupervise to show the $prompt...",2);
+    $exp->expect($timeout, $prompt) or
+      Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
+  }
+  elsif(ref($ssh_or_exp) eq 'Expect') {
+    $exp = $ssh_or_exp;
+  }
+  else {
+    die "Invalid first argument to DoRSupervise";
+  }
 
   # send each command, and wait always for the prompt again
   foreach my $cmd (@cmds) {
-    Logger("Waiting for RSupervise to show the $prompt prompt...",2);
-    $exp->expect($timeout, $prompt) or
-      Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
     Logger("Sending command '$cmd'...",2);
     $exp->send("$cmd\n");
+        Logger("Waiting for RSupervise to show the $prompt prompt...",2);
+    $exp->expect($timeout, $prompt) or
+      Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
   }
-
-  # wait one last time,
-  # ensures the last command has finished processing
-  Logger("Waiting for RSupervise to show the $prompt a last time...",2);
-  $exp->expect($timeout, $prompt) or
-    Logger("Did not see prompt $prompt on RSupervise after $timeout seconds");
 
   # DO NOT close the pty at the end, since
   # this makes AcquDAQ crash.
@@ -896,7 +889,7 @@ sub EnsureOptIsMounted {
     push(@$cleanup, sub {
            Logger("Cleanup: Unmounting /opt again",2);
            $ssh->system({stdout_discard=>1}, 'umount /opt') or
-             Logger("Can't umount /opt on $host. Check that: ".$ssh->error,-1);
+             Logger("Can't umount /opt on $host. Reason: ".$ssh->error,-1);
          });
   } else {
     Logger("/opt already mounted read-write on $host. This should NOT be default.",-1);

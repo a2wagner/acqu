@@ -1,4 +1,4 @@
-// SVN Info: $Id: TCCalibTime.h 912 2011-05-18 22:09:17Z werthm $
+// SVN Info: $Id$
 
 /*************************************************************************
  * Author: Dominik Werthmueller, Irakli Keshelashvili
@@ -31,6 +31,7 @@ private:
     Double_t* fTimeGain;                // TDC gain array
     Double_t fMean;                     // mean time position
     TLine* fLine;                       // indicator line
+    Double_t fConvergenceFactor;        // Used in offset calculation, to make convergence slower but more reliable 
     
     virtual void Init();
     virtual void Fit(Int_t elem);

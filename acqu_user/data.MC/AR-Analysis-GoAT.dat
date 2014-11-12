@@ -10,8 +10,9 @@ Reconstruct:
 # CaLib configuration, off for MC
 #
 
-RootTree-Output-Folder:		~/
-RootTree-File-Name:		AcquMC
+#RootTree-Output-Folder:		~
+RootTree-Input-Name:		A2G4
+RootTree-File-Name:		Acqu
 
 Initialise:
 

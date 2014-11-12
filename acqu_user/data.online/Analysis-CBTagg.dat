@@ -32,7 +32,8 @@ BitPattern:  ./data/monitor/Trig-Pattern.dat
 ##
 ## Apparatus setup....
 ##              Name            Class           	Setup file
-Apparatus:      TAGG            TA2Tagger   		Apparatus-Tagger883.dat
+#Apparatus:      TAGG            TA2Tagger   		Apparatus-Tagger883.dat
+Apparatus:      TAGG            TA2Tagger   		Apparatus-EPT.dat
 Apparatus:      CB              TA2CrystalBall		Apparatus-CB.dat
 Apparatus:      MWPC	        TA2GenericApp  		Apparatus-MWPC.dat
 Apparatus:      BeamPolMon      TA2BeamPolMon           Apparatus-BeamPolMon.dat
@@ -43,12 +44,13 @@ Apparatus:      BeamPolMon      TA2BeamPolMon           Apparatus-BeamPolMon.dat
 ## Specify physics analysis
 ##			Name	Class			Config File
 #Physics-Analysis:	EtaM	TA2PhotoPhysics	CBTaggPhysics.dat
+Physics-Analysis:	PHYS	TA2OnlinePhys	Physics-Online.dat
 ##
 ### Do some post initialisation...usually necessary
 Initialise:
 ##
 ## Macros
-Period:  1000	linPolMacro.C	linPolMacro()
+Period:  3000	PeriodMacro.C	PeriodMacro()
 #EndFile:   	EndFileMacro.C  EndFileMacro()
 #Finish:	FinishMacro.C	FinishMacro()
 ##
@@ -104,6 +106,12 @@ Display: ADC 100 131
 #Display: MultiHit 1432 1783 2000 -1000 1000 0
 #Display: MultiHit 1432 1783 2000 -1000 1000 1
 #Display: MultiHit 1432 1783 2000 -1000 1000 2
+## EPT - TDCs, Microscope Sector E, D, C
+Display: MultiHit 1817 1863 6000 -4000 -2000 0
+Display: MultiHit 1817 1863 6000 -4000 -2000 1
+Display: MultiHit 1817 1863 6000 -4000 -2000 2
+## EPT - ADCs
+Display: ADC 1184 1231
 ##
 ########################################################################
 ## Display Scalers
@@ -168,5 +176,10 @@ Display: Pattern-N	1 32 0 32
 #Display: 2D 1098 200 0 4000 1096   200  0     4000
 #Display: 2D 1164 200 0 4000 2043M0 200 -2500 -500
 ##
+########################################################################
+## Error Block monitor
+########################################################################
+##
+Display: 1D NHardwareError 100 0 100
 ##
 ## END OF FILE

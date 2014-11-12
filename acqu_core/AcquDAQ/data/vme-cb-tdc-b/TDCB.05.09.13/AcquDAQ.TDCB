@@ -17,12 +17,12 @@ Module:	KPH_I686   kphi686_0	kphi686.dat	0	0
 Module: KPH_VITEC   vit0	vitec_0.dat	0000	0	0
 #
 # -----------------------------------------             fIndex  fNcha Notread
-Module: CATCH_TDC    cat0 catchTDC.d 	e0300000	2000    128 	14
-Module: CATCH_TDC    cat1 catchTDC.d 	e0310000	2128    128 	14
-Module: CATCH_TDC    cat2 catchTDC.d 	e0320000	2256    128 	14
-Module: CATCH_TDC    cat3 catchTDC.d 	e0330000	2384    128 	14
-Module: CATCH_TDC    cat4 catchTDC.d 	e0340000	2512    128 	14
-Module: CATCH_TDC    cat5 catchTDC.d 	e0350000	2640    128 	14
+Module: CATCH_TDC    cat0 catchTDC_lat7k_win7k.d 	e0300000	2000    128 	14
+Module: CATCH_TDC    cat1 catchTDC_lat7k_win7k.d 	e0310000	2128    128 	14
+Module: CATCH_TDC    cat2 catchTDC_lat7k_win7k.d 	e0320000	2256    128 	14
+Module: CATCH_TDC    cat3 catchTDC_lat7k_win7k.d 	e0330000	2384    128 	14
+Module: CATCH_TDC    cat4 catchTDC_lat7k_win7k.d 	e0340000	2512    128 	14
+Module: CATCH_TDC    cat5 catchTDC_lat7k_win7k.d 	e0350000	2640    128 	14
 #
 ## Interrupt control module
 IRQ-Ctrl: vit0

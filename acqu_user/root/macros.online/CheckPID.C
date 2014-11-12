@@ -6,7 +6,21 @@
 // Check plots of Microscope spectra
 //
 
-CheckPID(){
+void PIDClear(){
+	TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PID"));
+	TA2Apparatus* a = (TA2Apparatus*)(gAN->GetChild("CB"));
+	if( t ) t->ZeroAll();
+	else printf("PID detector class not found\n");
+	if( a ) a->ZeroAll();
+	else printf("CB apparatus class not found\n");
+}
+
+CheckPID(TCanvas* canv){
+	if(canv==NULL) {
+		PIDClear();
+		return;
+	}
+ 
   Char_t* hname[] = {
     "PID_Nhits", "PID_Hits", "PID_Hits_v_EnergyOR", "PID_Hits_v_TimeOR",
     "CB_DeltaE0_v_Echarged0",
@@ -67,9 +81,6 @@ CheckPID(){
     "PID-CB 23 #deltaE-E Plot",
   };
   TH1F* h1;
-  TCanvas* canv;
-  //
-  canv = new TCanvas("PID-Spectra","PID-Online",240,180,1240,890);
   canv->SetFillStyle(4000);
   canv->Divide(7,4,0.01,0.01);
   for( Int_t i=0; i<2; i++ ){
@@ -98,20 +109,6 @@ CheckPID(){
     h2->GetXaxis()->SetTitle(xname[i]);
     h2->Draw("COLZ");
   }
-  return;
 }
 
 
-void PIDClear(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PID"));
-  TA2Apparatus* a = (TA2Apparatus*)(gAN->GetChild("CB"));
-  if( t ) t->ZeroAll();
-  else printf("PID detector class not found\n");
-  if( a ) a->ZeroAll();
-  else printf("CB apparatus class not found\n");
-}
-
-void SavePID(){
-  TA2Detector* t = (TA2Detector*)(gAN->GetGrandChild("PID"));
-  t->SaveHist();
-}

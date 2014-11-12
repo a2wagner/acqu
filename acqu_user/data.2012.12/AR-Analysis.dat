@@ -53,6 +53,7 @@ BitPattern:  AR-Analysis-TriggerPat.dat
 Apparatus:      TAGG            TA2Tagger   		AR-Analysis-Tagger.dat
 Apparatus:      CB              TA2CentralApparatus	AR-Analysis-CentApp.dat
 Apparatus:      TAPS            TA2Taps		  	AR-Analysis-TAPS.dat
+Apparatus:     	LinPol          TA2LinearPolEpics       AR-Analysis-LinPol.dat
 ##
 ## Turn on apparatus-level reconstruction
 Reconstruct-Analysis:
@@ -60,6 +61,7 @@ Reconstruct-Analysis:
 ## Specify physics analysis
 ##			Name	Class		Config File
 Physics-Analysis:	PHYS	TA2GoAT		AR-Analysis-GoAT.dat
+#Physics-Analysis:   MyCaLib     TA2MyCaLib      MyCaLib.dat
 ##
 ## Do some post initialisation...usually necessary
 Initialise:

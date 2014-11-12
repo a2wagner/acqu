@@ -113,3 +113,10 @@ void TA2DataFormat::InitForeign()
   //
   ConstructHeader();
 }
+
+//---------------------------------------------------------------------------
+Bool_t TA2DataFormat::IsMaybeMk2() 
+{
+  UInt_t* marker = (UInt_t*)((char*)fHeader + sizeof(UInt_t));
+  return *marker == EHeadBuff;
+}

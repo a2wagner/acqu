@@ -1,5 +1,3 @@
-// SVN Info: $Id: TOA2Detector.cxx 1046 2012-01-13 16:58:28Z werthm $
-
 /*************************************************************************
  * Author: Dominik Werthmueller, 2008
  *************************************************************************/
@@ -178,6 +176,37 @@ Int_t TOA2Detector::GetTAPSBlock(Int_t id, A2TAPSType_t type)
         {
             ::Error("GetTAPSBlock", "TAPS type could not be identified!");
             return 0;
+        }
+    }
+}
+
+//______________________________________________________________________________
+Bool_t TOA2Detector::IsTAPSPWO(Int_t id, A2TAPSType_t type)
+{
+    // Return kTRUE if the element 'id' belongs to the PWO rings of TAPS, otherwise
+    // return kFALSE.
+    
+    // check TAPS setup
+    switch (type)
+    {
+        case kTAPS_2007:
+        {
+            return kFALSE;
+        }
+        case kTAPS_2008:
+        {
+            if (GetTAPSRing(id, type) == 1) return kTRUE;
+            else return kFALSE;
+        }
+        case kTAPS_2009:
+        {
+            if (GetTAPSRing(id, type) <= 2) return kTRUE;
+            else return kFALSE;
+        }
+        default:
+        {
+            ::Error("IsTAPSPWO", "TAPS type could not be identified!");
+            return kFALSE;
         }
     }
 }

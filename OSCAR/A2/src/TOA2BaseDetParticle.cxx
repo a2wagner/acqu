@@ -1,7 +1,5 @@
-// SVN Info: $Id: TOA2BaseDetParticle.cxx 1261 2012-07-28 20:48:41Z werthm $
-
 /*************************************************************************
- * Author: Dominik Werthmueller, 2008-2011
+ * Author: Dominik Werthmueller, 2008-2014
  *************************************************************************/
 
 //////////////////////////////////////////////////////////////////////////
@@ -51,6 +49,13 @@ TOA2BaseDetParticle::TOA2BaseDetParticle()
     fVetoIndex       = -1;
     fVetoEnergy      =  0;
     fVetoTime        =  0;
+    
+    fMWPC_X1 = 0;
+    fMWPC_Y1 = 0;
+    fMWPC_Z1 = 0;
+    fMWPC_X2 = 0;
+    fMWPC_Y2 = 0;
+    fMWPC_Z2 = 0;
 }
 
 //______________________________________________________________________________
@@ -59,6 +64,9 @@ TOA2BaseDetParticle::TOA2BaseDetParticle(const TOA2BaseDetParticle& orig)
 {
     // Copy constructor.
     
+    // do not save bit mask and unique ID
+    Class()->IgnoreTObjectStreamer();
+
     fPDG_ID   = orig.fPDG_ID;
     fDetector = orig.fDetector;
 
@@ -80,9 +88,16 @@ TOA2BaseDetParticle::TOA2BaseDetParticle(const TOA2BaseDetParticle& orig)
 
     fCentralSGEnergy = orig.fCentralSGEnergy;
     
-    fVetoIndex       = orig.fVetoIndex;
-    fVetoEnergy      = orig.fVetoEnergy;
-    fVetoTime        = orig.fVetoTime;
+    fVetoIndex  = orig.fVetoIndex;
+    fVetoEnergy = orig.fVetoEnergy;
+    fVetoTime   = orig.fVetoTime;
+
+    fMWPC_X1 = orig.fMWPC_X1;
+    fMWPC_Y1 = orig.fMWPC_Y1;
+    fMWPC_Z1 = orig.fMWPC_Z1;
+    fMWPC_X2 = orig.fMWPC_X2;
+    fMWPC_Y2 = orig.fMWPC_Y2;
+    fMWPC_Z2 = orig.fMWPC_Z2;
 }
 
 //______________________________________________________________________________
@@ -92,7 +107,10 @@ void TOA2BaseDetParticle::Calculate4Vector(TLorentzVector* p4, Double_t mass)
     // mass and the detected energy and position information. The components of
     // the 4-vector will be stored in 'p4'.
  
-    TOPhysics::Calculate4Vector(fX, fY, fZ, fEnergy, mass, p4);
+    Double_t tot_e = fEnergy + mass;
+    p4->SetE(tot_e);
+    TVector3 p(fX, fY, fZ);
+    p4->SetVect(p.Unit() * TMath::Sqrt(tot_e*tot_e - mass*mass));
 }
 
 //______________________________________________________________________________
@@ -111,7 +129,7 @@ void TOA2BaseDetParticle::Calculate4Vector(TLorentzVector* p4, Double_t mass, Do
 
 //______________________________________________________________________________
 Bool_t TOA2BaseDetParticle::Calculate4VectorTOFTagger(TLorentzVector* p4, Double_t mass, Double_t taggerTime,
-                                                  Bool_t isMC)
+                                                      Bool_t isMC)
 {
     // Calculate the 4-vector of this particle using 'mass' as the particle's 
     // mass, 'taggerTime' as the tagger time and the detected position information. 
@@ -183,29 +201,48 @@ Double_t TOA2BaseDetParticle::CalculateEkinTOFTAPS(Double_t mass, Double_t tapsT
 }
 
 //______________________________________________________________________________
-Double_t TOA2BaseDetParticle::CalculateTOFTagger(Double_t taggerTime, Bool_t isMC)
+Double_t TOA2BaseDetParticle::CalculateTOFTagger(Double_t taggerTime, Bool_t isMC,
+                                                 A2TAPSType_t tapsType)
 {
     // Return the time-of-flight normalized to 1 meter [ns/1m] relative
     // to the tagger time 'taggerTime'.
     //
     // If 'isMC' is kTRUE the MC timing is returned (different calculation for 
     // the TAPS TOF).
+    // 'tapsType' is used for the different calculation for PbWO4 elements.
     
     // calculate the particle tof
     Double_t tof = 0;
 
     //
     // TAPS
-    // t_TAPS = t_trig - t_CFD
     // t_tagg = t_scint - t_trig
-    // t = -(t_TAPS + t_tagg) = -(t_scint - t_CFD) = t_CFD - t_scint
-    if (fDetector == kTAPSDetector) tof = - (fTime + taggerTime);
-
+    if (fDetector == kTAPSDetector) 
+    {
+        // check if PbWO4 or BaF2
+        if (TOA2Detector::IsTAPSPWO(fCentralElement, tapsType))
+        {
+            // PbWO4
+            // t_TAPS = t_PWO - t_trig
+            // t = t_TAPS - t_tagg = t_PWO - t_scint
+            tof = fTime - taggerTime;
+        }
+        else
+        {
+            // BaF2
+            // t_TAPS = t_trig - t_CFD
+            // t = -(t_TAPS + t_tagg) = -(t_scint - t_CFD) = t_CFD - t_scint
+            tof = - (fTime + taggerTime);
+        }
+    }
     //
     // CB
     // t_CB = t_NaI - t_trig
     // t = t_CB - t_tagg = t_NaI - t_scint
-    else if (fDetector == kCBDetector) tof = fTime - taggerTime;
+    else if (fDetector == kCBDetector) 
+    {
+        tof = fTime - taggerTime;
+    }
 
     // calculate the time of flight for 1 meter [ns/1m]
     if (isMC)
@@ -231,13 +268,17 @@ Double_t TOA2BaseDetParticle::CalculateTOFCB(Double_t cbTime, Bool_t isMC)
     // t_CB = t_NaI - t_trig
     // t = -(t_TAPS + t_CB) = -(t_NaI - t_CFD) = t_CFD - t_NaI
     if (fDetector == kTAPSDetector) 
+    {
         tof = - (fTime + cbTime);
+    }
     //
     // CB
     // t_CB = t_NaI - t_trig
     // t = t_CB - t_CB_ref = t_NaI - t_NaI_ref
     else if (fDetector == kCBDetector) 
+    {
         tof = fTime - cbTime;
+    }
 
     // calculate the time of flight for 1 meter [ns/1m]
     if (isMC)
@@ -261,14 +302,19 @@ Double_t TOA2BaseDetParticle::CalculateTOFTAPS(Double_t tapsTime, Bool_t isMC)
     // TAPS
     // t_TAPS = t_trig - t_CFD
     // t = t_TAPS_ref - t_TAPS = t_CFD - t_CFD_ref
-    if (fDetector == kTAPSDetector) tof = tapsTime - fTime;
-
+    if (fDetector == kTAPSDetector) 
+    {
+        tof = tapsTime - fTime;
+    }
     //
     // CB
     // t_TAPS = t_trig - t_CFD
     // t_CB = t_NaI - t_trig
     // t = t_CB + t_TAPS = t_NaI - t_CFD
-    else if (fDetector == kCBDetector) tof = fTime + tapsTime;
+    else if (fDetector == kCBDetector) 
+    {
+        tof = fTime + tapsTime;
+    }
 
     // calculate the time of flight for 1 meter [ns/1m]
     if (isMC)
@@ -303,6 +349,35 @@ Double_t TOA2BaseDetParticle::GetPhi() const
     // Return the azimuth angle (from -pi to pi) (ROOT).
 
     return fX == 0.0 && fY == 0.0 ? 0.0 : TMath::ATan2(fY, fX);
+}
+
+//______________________________________________________________________________
+Bool_t TOA2BaseDetParticle::CalculatePSA(Double_t* psaR, Double_t* psaA)
+{   
+    // Calculate the PSA information of this particle.
+    // Save the PSA radius to 'psaR' and the PSA angle to psA.
+    // If the particle was detected in TAPS and the PSA information could
+    // be calculated and saved, kTRUE is returned, otherwise kFALSE.
+    
+    // check if particle was detected in TAPS
+    if (GetDetector() == kTAPSDetector)
+    {   
+        // calculate the PSA information
+        Double_t lgE  = GetCentralEnergy();
+        Double_t sgE  = GetCentralSGEnergy();
+        Double_t r = TMath::Sqrt(sgE*sgE + lgE*lgE); 
+        Double_t a = TMath::ATan(sgE/lgE)*TMath::RadToDeg();
+        
+        // saved information
+        if (psaR) *psaR = r;
+        else return kFALSE;
+        if (psaA) *psaA = a;
+        else return kFALSE;
+
+        // calculation and checks were successful here
+        return kTRUE;
+    }
+    else return kFALSE;
 }
 
 //______________________________________________________________________________
@@ -342,38 +417,51 @@ void TOA2BaseDetParticle::Print(Option_t* option) const
     printf("Veto index             : %d\n", fVetoIndex);
     printf("Veto energy            : %f\n", fVetoEnergy);
     printf("Veto time              : %f\n", fVetoTime);
+    printf("MWPC Hit 1 (x, y, z)   : %f, %f, %f\n", fMWPC_X1, fMWPC_Y1, fMWPC_Z1);
+    printf("MWPC Hit 2 (x, y, z)   : %f, %f, %f\n", fMWPC_X2, fMWPC_Y2, fMWPC_Z2);
 }
 
 //______________________________________________________________________________
-TOA2BaseDetParticle& TOA2BaseDetParticle::operator=(TOA2BaseDetParticle& p)
+TOA2BaseDetParticle& TOA2BaseDetParticle::operator=(const TOA2BaseDetParticle& p)
 {
     // Assignment operator.
     
-    fPDG_ID   = p.fPDG_ID;
-    fDetector = p.fDetector;
+    // check self assignment
+    if (this != &p)
+    {
+        fPDG_ID   = p.fPDG_ID;
+        fDetector = p.fDetector;
 
-    fX = p.fX;
-    fY = p.fY;
-    fZ = p.fZ;
+        fX = p.fX;
+        fY = p.fY;
+        fZ = p.fZ;
 
-    fEnergy = p.fEnergy;
-    fTime   = p.fTime;
+        fEnergy = p.fEnergy;
+        fTime   = p.fTime;
 
-    fClusterSize = p.fClusterSize;
+        fClusterSize = p.fClusterSize;
 
-    fCentralElement = p.fCentralElement;
-    fCentralEnergy  = p.fCentralEnergy;
-    
-    fPIDIndex  = p.fPIDIndex;
-    fPIDEnergy = p.fPIDEnergy;
-    fPIDTime   = p.fPIDTime;
+        fCentralElement = p.fCentralElement;
+        fCentralEnergy  = p.fCentralEnergy;
+        
+        fPIDIndex  = p.fPIDIndex;
+        fPIDEnergy = p.fPIDEnergy;
+        fPIDTime   = p.fPIDTime;
 
-    fCentralSGEnergy = p.fCentralSGEnergy;
-    
-    fVetoIndex       = p.fVetoIndex;
-    fVetoEnergy      = p.fVetoEnergy;
-    fVetoTime        = p.fVetoTime;
-    
+        fCentralSGEnergy = p.fCentralSGEnergy;
+        
+        fVetoIndex  = p.fVetoIndex;
+        fVetoEnergy = p.fVetoEnergy;
+        fVetoTime   = p.fVetoTime;
+        
+        fMWPC_X1 = p.fMWPC_X1;
+        fMWPC_Y1 = p.fMWPC_Y1;
+        fMWPC_Z1 = p.fMWPC_Z1;
+        fMWPC_X2 = p.fMWPC_X2;
+        fMWPC_Y2 = p.fMWPC_Y2;
+        fMWPC_Z2 = p.fMWPC_Z2;
+    }
+
     return *this;
 }
 

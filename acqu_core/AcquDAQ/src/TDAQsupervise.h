@@ -52,7 +52,7 @@ enum { EExpCtrlUndef, EExpCtrlNet, EExpGUINet, EExpCtrlLocalAR, EExpCtrlLocal,
 enum { ESupStart, ESupGo, ESupRun, ESupPause, ESupStop, ESupEnd, ESupKill, 
        ESupDump,
        ESupExperiment, ESupComm, ESupFile, ESupRunNumber,
-       ESupAuto, ESupNoAuto, ESupIsRunning, ESupConfigTCS, ESupCAMAC, 
+       ESupAuto, ESupNoAuto, ESupIsRunning, ESupConfigTCS, ESupSetTCSRunMode, ESupCAMAC, 
        ESupVUPROM, ESupV874 };
 
 class ARSocket_t;
@@ -110,6 +110,7 @@ class TDAQsupervise : public TA2System {
   virtual void SaveRunLog();
   virtual Int_t GetRunLog();
   virtual void ConfigTCS();
+  virtual void SetTCSRunMode(UInt_t runmode);
   virtual void CAMAC_IO(Int_t,Int_t,Int_t,Int_t,Int_t);
   virtual void ConfigVUPROM(Char_t*);
   virtual Int_t* GetVUPROMparm(Int_t);

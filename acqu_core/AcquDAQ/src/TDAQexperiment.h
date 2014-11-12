@@ -45,8 +45,9 @@
 //--Rev 	JRM Annand    3rd Sep 2013  Add VITEC interrupt/event-ID card
 //--Rev 	JRM Annand    9th Sep 2013  Add event-ID master functionality
 //--Rev 	JRM Annand   22nd Sep 2013  Add VUPROMT, remove SlowCtrl thread
-//--Update	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
+//--Rev 	JRM Annand   24nd Sep 2013  Don't start ctrl thread if slave
 //                                          End-run scaler read for slaves
+//--Update	JRM Annand   29nd Mar 2014  Slave ev-ID read before scaler read
 //
 //--Description
 //                *** AcquDAQ++ <-> Root ***

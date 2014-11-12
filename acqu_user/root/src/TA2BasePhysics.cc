@@ -189,6 +189,8 @@ void TA2BasePhysics::LoadVariable()
 
 void TA2BasePhysics::PostInit()
 {
+  //Int_t nChilds;
+  
   //'Permutations:' line in configuration file gives maximum number of particles to be processed
   nBeam = fNpermutation[0]; //Tagger
   nBall = fNpermutation[1]; //Crystal Ball

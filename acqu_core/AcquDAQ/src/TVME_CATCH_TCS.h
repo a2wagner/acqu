@@ -36,7 +36,7 @@ enum {
   ETCS_Init = 0x1,
   ETCS_Done = 0x2,
   ETCS_Low = 0x0,
-  ETCS_High = 0x1,
+  ETCS_High = 0x1
 };
 
 class TVME_CATCH_TCS : public TVME_CATCH {
@@ -51,6 +51,7 @@ class TVME_CATCH_TCS : public TVME_CATCH {
   virtual void PostInit( );
   virtual Int_t ProgTCS( Char_t*, UInt_t );
   virtual Bool_t* FillBuffer(Char_t*, Int_t*);
+  virtual void SetRunMode(UInt_t runmode);  
   virtual void ReConfig();
   ClassDef(TVME_CATCH_TCS,1)   
     };

@@ -37,7 +37,9 @@ GeSiCAFile: ./data/FPGA/hgsca6_3.rbt
 # Code file for SADC FPGA
 # "Cold start" only
 # Firmware for "normal" 3-sum readout:    (AcquMode 3)
-SADCFile:   ./data/FPGA/i_adc_mainz_100.rbt
+# SADCFile:   ./data/FPGA/i_adc_mainz_100.rbt
+SADCFile:   ./data/FPGA/i_adc_mainz_20140327_0.rbt
+#
 # Firmware for 2-sum readout:
 #SADCFile:     ./data/FPGA/i_adc_mainz_102_sum01.rbt
 # Firmware for 1-sum readout:
@@ -65,7 +67,7 @@ SADCFile:   ./data/FPGA/i_adc_mainz_100.rbt
 #GeSiCAMode:	1	64		90		3
 #GeSiCAMode:	1	62		90		3
 # Increase latency by 22 to compensate for trigger coming 550ns later - EJD 19.02.10
-GeSiCAMode:	1	69		90		3
+GeSiCAMode:	5	69		90		6
 # Testing the new firmware-versions
 #GeSiCAMode:	1	62		90		6
 #

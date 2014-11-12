@@ -21,8 +21,19 @@
 #include "TA2ClusterDetector.h"
 #include "HitClusterTAPS_t.h"
 
+enum ETAPSType {
+    ENoType,
+    EBaF2,
+    EBaF2_PWO_08,
+    EBaF2_PWO_09,
+};
+typedef ETAPSType TAPSType_t;
+
 class TA2TAPS_BaF2 : public TA2ClusterDetector
 {
+ protected:
+     TAPSType_t fType;  // type of TAPS configuration	
+	
  private:
   HitD2A_t** fSGEnergy;
   HitD2A_t** fLGEnergy;
@@ -72,6 +83,8 @@ class TA2TAPS_BaF2 : public TA2ClusterDetector
   Double_t GetClusterThreshold() {return fClEthresh; }
   HitD2A_t* GetLGElement(Int_t i);
   HitD2A_t* GetSGElement(Int_t i);
+
+    TAPSType_t GetType() const { return fType; }
     
   ClassDef(TA2TAPS_BaF2,1)
 };
