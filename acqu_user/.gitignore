@@ -16,3 +16,6 @@
 # AcquRoot histogram files
 /histograms
 *.root
+
+# standard data link to config files
+data
