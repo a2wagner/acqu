@@ -31,6 +31,7 @@
 #include "TA2BasePhysics.h"
 #include "TA2TriggerPhysics.h"
 #include "TA2Pi0Compton.h"
+#include "TA2KinFitPhysics.h"
 #include "TA2SaschaPhysics.h"
 #include "TA2OnlinePhysics.h"
 #include "TA2OnlinePhys.h"
@@ -62,6 +63,7 @@ enum {
   EA2BasePhysics,
   EA2TriggerPhysics,
   EA2Pi0Compton,
+  EA2KinFitPhysics,
   EA2SaschaPhysics,
   EA2OnlinePhysics,
   EA2OnlinePhys,
@@ -81,19 +83,20 @@ static const Map_t kKnownChild[] =
   {"TA2CB",               EA2CB},
   {"TA2Taps",             EA2Taps},
   {"TA2CentralApparatus", EA2CentralApparatus},
-  {"TA2GenericApp",       EA2GenericApp},  
-  {"TA2BeamPolMon",       EA2BeamPolMon},  
+  {"TA2GenericApp",       EA2GenericApp},
+  {"TA2BeamPolMon",       EA2BeamPolMon},
   //Physics
   {"TA2GeomCalibPhysics", EA2GeomCalibPhysics},
   {"TA2Pi0Compton",       EA2Pi0Compton},
+  {"TA2KinFitPhysics",    EA2KinFitPhysics},
   {"TA2SaschaPhysics",    EA2SaschaPhysics},
   {"TA2OnlinePhysics",    EA2OnlinePhysics},
-  {"TA2OnlinePhys",		  EA2OnlinePhys},
+  {"TA2OnlinePhys",       EA2OnlinePhys},
   {"TA2Physics",          EA2Physics},
   {"TA2UserPhysics",      EA2UserPhysics},
   {"TA2MesonPhysics",     EA2MesonPhysics},
-  {"TA2AccessSQL",	  EA2AccessSQL},
-  {"TA2GoAT",		  EA2GoAT},
+  {"TA2AccessSQL",        EA2AccessSQL},
+  {"TA2GoAT",             EA2GoAT},
   {"TA2BasePhysics",      EA2BasePhysics},
   {"TA2TriggerPhysics",   EA2TriggerPhysics},
  // {"TA2MyAnalysis",       EA2MyAnalysis},
@@ -162,6 +165,9 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    case EA2Pi0Compton:
     // Cristina's Physics class
     return new TA2Pi0Compton( name, this );
+   case EA2KinFitPhysics:
+    // Physics class using Sergey's KFit class
+    return new TA2KinFitPhysics(name, this);
    case EA2SaschaPhysics:
     // My physics class
     return new TA2SaschaPhysics(name, this);
@@ -171,7 +177,7 @@ TA2DataManager* TA2UserAnalysis::CreateChild(const char* name, Int_t a)
    //Physics stuff:
    case EA2OnlinePhys:
     // Temporary Online Physics class
-    return new TA2OnlinePhys( name, this );    
+    return new TA2OnlinePhys( name, this );
    case EA2Physics:
     //Default (dummy physics)
     return new TA2Physics(name, this);

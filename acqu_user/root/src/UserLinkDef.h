@@ -27,6 +27,7 @@
 
 // Physics classes
 #pragma link C++ class TA2Pi0Compton+;
+#pragma link C++ class TA2KinFitPhysics+;
 #pragma link C++ class TA2SaschaPhysics+;
 #pragma link C++ class TA2OnlinePhysics+;
 #pragma link C++ class TA2OnlinePhys+;
@@ -66,6 +67,7 @@
 #pragma link C++ class TA2Event+;
 #pragma link C++ class TA2KFParticle+;
 #pragma link C++ class TA2CBKinematicFitter+;
+#pragma link C++ class TA2KFit+;
 #pragma link C++ class TA2MwpcTrack++;
 #pragma link C++ class TA2CylMwpc++;
 #pragma link C++ class TA2CylMwpcWire;
