@@ -1,3 +1,0 @@
-[submodule "acqu_user/root/src/KinFitter"]
-	path = acqu_user/root/src/KinFitter
-	url = https://github.com/goepfert/KinFitter.git
