@@ -12,6 +12,13 @@ target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} Minuit)
 set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 
+set(MOD "KinFitter")
+ROOT_PREPARE_LIB("root/src/KinFitter" "root/src/KinFitter" "root/src/KinFitter/KinFitter_LinkDef.h" "root/src/KinFitter/KinFitterDict.cc" SRCS EXESRCS)
+add_library("lib${MOD}" SHARED ${SRCS})
+target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} Minuit)
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
+
+
 set(MOD "MCUserRoot")
 ROOT_PREPARE_LIB("root/src-mc" "root/src-mc" "root/src-mc/MCUserLinkDef.h" "root/src-mc/MCDict.cc" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
@@ -28,7 +35,7 @@ set_source_files_properties(${ADDITIONAL_FILES} PROPERTIES HEADER_FILE_ONLY TRUE
 # it's enough to add the addtional files to the commonly used AcquRoot
 set(MOD "AcquRoot")
 add_executable(${MOD} "root/src/Main${MOD}.cc" ${ADDITIONAL_FILES})
-target_link_libraries(${MOD} libUserRoot)
+target_link_libraries(${MOD} libUserRoot libKinFitter)
 
 set(MOD "AcquHead")
 add_executable(${MOD} "root/src/Main${MOD}.cc")
