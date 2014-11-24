@@ -5,17 +5,18 @@ message(STATUS "Configuring acqu_user...")
 # acqu user incs have been collected in previous subprojects
 include_directories("root/src" "root/src-mc" ${ACQU_USER_INCS})
 
-set(MOD "UserRoot")
-ROOT_PREPARE_LIB("root/src" "root/src" "root/src/UserLinkDef.h" "root/src/UserDict.cc" SRCS EXESRCS)
-add_library("lib${MOD}" SHARED ${SRCS})
-target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} Minuit)
-set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
-
 
 set(MOD "KinFitter")
 ROOT_PREPARE_LIB("root/src/KinFitter" "root/src/KinFitter" "root/src/KinFitter/KinFitter_LinkDef.h" "root/src/KinFitter/KinFitterDict.cc" SRCS EXESRCS)
 add_library("lib${MOD}" SHARED ${SRCS})
 target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} Minuit)
+set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
+
+
+set(MOD "UserRoot")
+ROOT_PREPARE_LIB("root/src" "root/src" "root/src/UserLinkDef.h" "root/src/UserDict.cc" SRCS EXESRCS)
+add_library("lib${MOD}" SHARED ${SRCS})
+target_link_libraries("lib${MOD}" ${ROOT_LIBRARIES} ${ACQU_USER_LIBS} libKinFitter Minuit)
 set_target_properties("lib${MOD}" PROPERTIES OUTPUT_NAME ${MOD})
 
 
