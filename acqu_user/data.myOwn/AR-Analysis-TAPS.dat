@@ -39,9 +39,9 @@ TAPS_dEvE_Cuts:  data/cuts/TAPS_DeltaE-E.root
 TAPS_dEvE_Proton:   1
 TAPS_dEvE_ChPion:   0
 TAPS_dEvE_Electron: 0
-TAPS_dEvE_Proton_CutName:    p
-TAPS_dEvE_ChPion_CutName:    pi
-TAPS_dEvE_Electron_CutName:  pie
+TAPS_dEvE_Proton_CutName:    CutProton
+TAPS_dEvE_ChPion_CutName:    CutPiplus
+TAPS_dEvE_Electron_CutName:  CutElectron
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
