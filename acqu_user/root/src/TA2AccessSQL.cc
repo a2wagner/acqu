@@ -58,8 +58,11 @@ TA2AccessSQL::~TA2AccessSQL()
 
 void TA2AccessSQL::SetConfig(Char_t* line, Int_t key)
 {
-  /* Skip applying calibration if monte carlo data is analysed */
-  if (gAR->GetProcessType() == EMCProcess) return;
+  /* Skip applying calibration config if monte carlo data is analysed */
+  if (gAR->GetProcessType() == EMCProcess) {
+    TA2Physics::SetConfig(line, key);
+    return;
+  }
 
   switch (key)
   {
