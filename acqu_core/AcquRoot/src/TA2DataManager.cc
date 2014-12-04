@@ -328,6 +328,12 @@ void TA2DataManager::ParseCut( char* line )
       return;
     }
     TCutG* cut = (TCutG*)cutf->Get(cutname);      // locate TCutG
+    // check if the cut was found to prevent usage of null pointers
+    if(!cut){
+      PrintError(line,"<2D filter cut: specified cut name does not exist>");
+      cutf->Close();
+      return;
+    }
     // Create TA2Cut from TCutG and link into desired cuts list
     // X-Y should be either integer of double (both the same)
     if( IsInt( varX ) )
