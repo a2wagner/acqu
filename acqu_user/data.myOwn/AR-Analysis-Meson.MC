@@ -81,19 +81,7 @@ TriggerParam:   500.0    1.0     2      65535   0      0      0	     73
 *ThresNaI:  data/CB_NaI_Thres.txt
 *GainsNaI:  data/CB_NaI_Gain.txt
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Times for the prompt and random windows used in the analysis
-#
-Prompt: -7. 6.
-Random: -40. -10. 10. 40.
-#
-# Save Prompt-Random-Ratio as histogram for later subtraction
-# Maybe it's better to place this keyword after Initialise:
-#  but normally this should be catched within TA2DataManager
-#
-Display: 1D promptRandomRatio 1000 0. 1.
-#
+
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 # Print some additional information for debugging purposes
@@ -102,13 +90,7 @@ Display: 1D promptRandomRatio 1000 0. 1.
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 # Display speed information of the analysis
-SpeedInfo:
-#
-#- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#
-# File to read TCutG from used for energy and momentum balance cut
-#           path to file                                   cut name
-BalanceCut: /home/wagners/acqu/acqu_user/data/myCuts.root  balanceCut
+#SpeedInfo:
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #

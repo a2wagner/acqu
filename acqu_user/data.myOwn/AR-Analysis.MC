@@ -37,7 +37,8 @@ Reconstruct-Analysis:
 #High-level physics analysis, processing 4-vectors produced by apparatus
 #classes.
 ##                 	Name    Class               Configuration File
-Physics-Analysis:	PHYS    TA2SaschaPhysics	AR-Analysis-Meson.MC
+#Physics-Analysis:	PHYS    TA2SaschaPhysics	AR-Analysis-Meson.MC
+Physics-Analysis:	PHYS    TA2KinFitPhysics	AR-Analysis-Meson.MC
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
