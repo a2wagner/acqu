@@ -26,7 +26,7 @@ class TA2KinFitPhysics : public TA2BasePhysics
 	TA2CalArray* fNaI;
 	TA2TAPS_BaF2* fBaF2;
 	TA2Apparatus* fVeto;
-
+bool init;
 	// Flag for checking what data type will be processed
 	Bool_t MC;
 

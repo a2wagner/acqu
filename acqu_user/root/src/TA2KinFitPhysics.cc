@@ -12,7 +12,7 @@ ClassImp(TA2KinFitPhysics)
 
 TA2KinFitPhysics::TA2KinFitPhysics(const char* Name, TA2Analysis* Analysis) : TA2BasePhysics(Name, Analysis)
 {
-
+init = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -147,7 +147,7 @@ void TA2KinFitPhysics::LoadVariable()
 //---------------------------------------------------------------------------
 
 void TA2KinFitPhysics::PostInit()
-{
+{init = true;
 	std::cout << std::endl;  // insert an empty line
 	// Check whether simulated or measured data will be processed
 	if (gAR->GetProcessType() == EMCProcess) {
@@ -247,7 +247,7 @@ void TA2KinFitPhysics::PostInit()
 
 /* Main method for applying the physics related stuff */
 void TA2KinFitPhysics::Reconstruct()
-{
+{if (!init) PrintError("", "No PostInit() executed!", EErrFatal);
 	//Perform basic physics tasks
 	TA2BasePhysics::Reconstruct();
 
@@ -321,7 +321,8 @@ void TA2KinFitPhysics::Reconstruct()
 
 
 
-
+std::cout << "KinFitter status: " << KinFit.getStatus() << std::endl;
+KinFit.print();
 
 	TLorentzVector tmpState(0., 0., 0., 0.);
 	int chargedPart[N_FINAL_STATE];
@@ -361,8 +362,119 @@ void TA2KinFitPhysics::Reconstruct()
 		int ndf;
 		double chisq;
 		double prob;
-		//TODO
+
+		TVector3 photon1 = particles[neutralPart[0]].GetVect();
+		TVector3 photon2 = particles[neutralPart[1]].GetVect();
+		TVector3 proton = particles[chargedPart[0]].GetVect();
+
+		TMatrixD covPhoton1;
+		TMatrixD covPhoton2;
+		TMatrixD covProton;
+
+		TLorentzVector fitPhoton1;
+		TLorentzVector fitPhoton2;
+		TLorentzVector fitProton;
+
+		TFitParticlePThetaPhi ph1("neutral1", "neutral1", &photon1, 0., &covPhoton1);
+		TFitParticlePThetaPhi ph2("neutral2", "neutral2", &photon2, 0., &covPhoton2);
+		TFitParticlePThetaPhi pr("charged1", "charged1", &proton, 0., &covProton);
+
+		int rows = 3;  // number of rows equal number of cols
+		Double_t errors[3];
+		int currPart = neutralPart[0];
+		errors[0] = particles[currPart].GetSigmaE();
+		errors[0] *= errors[0];
+		errors[1] = particles[currPart].GetSigmaPhi();
+		errors[1] *= errors[1];
+		errors[2] = particles[currPart].GetSigmaTheta();
+		errors[2] *= errors[2];
+		if (!KinFit.fillSquareMatrixDiagonal(&covPhoton1, errors, rows))
+			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
+		currPart = neutralPart[1];
+		errors[0] = particles[currPart].GetSigmaE();
+		errors[0] *= errors[0];
+		errors[1] = particles[currPart].GetSigmaPhi();
+		errors[1] *= errors[1];
+		errors[2] = particles[currPart].GetSigmaTheta();
+		errors[2] *= errors[2];
+		if (!KinFit.fillSquareMatrixDiagonal(&covPhoton2, errors, rows))
+			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
+		currPart = chargedPart[0];
+		errors[0] = particles[currPart].GetSigmaE();
+		errors[0] *= errors[0];
+		errors[1] = particles[currPart].GetSigmaPhi();
+		errors[1] *= errors[1];
+		errors[2] = particles[currPart].GetSigmaTheta();
+		errors[2] *= errors[2];
+		if (!KinFit.fillSquareMatrixDiagonal(&covProton, errors, rows))
+			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
+
+		TVector3 beam = Tagged[0].GetVect();
+		TVector3 target = fP4target[0].Vect();
+		TMatrixD covBeam;
+		TMatrixD covTarget;
+		TFitParticlePThetaPhi bm("beam", "beam", &beam, 0., &covBeam);
+		TFitParticlePThetaPhi trgt("target", "target", &target, 0., &covTarget);
+		errors[0] = Tagged[0].GetSigmaE();
+		errors[0] *= errors[0];
+		errors[1] = Tagged[0].GetSigmaPhi();
+		errors[1] *= errors[1];
+		errors[2] = Tagged[0].GetSigmaTheta();
+		errors[2] *= errors[2];
+		if (!KinFit.fillSquareMatrixDiagonal(&covBeam, errors, rows))
+			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
+		covTarget.Zero();
+		covTarget.ResizeTo(3, 3);
+
+		// energy and momentum constraints have to be defined separately for each component. components can be accessed via enum TFitConstraintEp::component
+		TFitConstraintEp energyConservation("energyConstr", "Energy conservation constraint", 0, TFitConstraintEp::E, 0.);
+		energyConservation.addParticles1(&bm, &trgt);
+		energyConservation.addParticles2(&ph1, &ph2, &pr);
+		TFitConstraintEp pxConservation("pxConstr", "Px conservation constraint", 0, TFitConstraintEp::pX, 0.);
+		pxConservation.addParticles1(&bm, &trgt);
+		pxConservation.addParticles2(&ph1, &ph2, &pr);
+		TFitConstraintEp pyConservation("pyConstr", "Py conservation constraint", 0, TFitConstraintEp::pY, 0.);
+		pyConservation.addParticles1(&bm, &trgt);
+		pyConservation.addParticles2(&ph1, &ph2, &pr);
+		TFitConstraintEp pzConservation("pzConstr", "Pz conservation constraint", 0, TFitConstraintEp::pZ, 0.);
+		pzConservation.addParticles1(&bm, &trgt);
+		pzConservation.addParticles2(&ph1, &ph2, &pr);
+		TFitConstraintM massConstrProton("massConstr_proton", "mass constraint proton", 0, 0, MASS_PROTON);
+		massConstrProton.addParticle1(&pr);
+
+		//TKinFitter fit;
+		KinFit.addMeasParticle(&ph1);
+		KinFit.addMeasParticle(&ph1);
+		KinFit.addMeasParticle(&pr);
+		KinFit.setParamUnmeas(&pr, 0);  // proton energy unmeasured
+		KinFit.addMeasParticle(&bm);
+		KinFit.addMeasParticle(&trgt);
+		KinFit.setParamUnmeas(&trgt, 0);
+		KinFit.setParamUnmeas(&trgt, 1);
+		KinFit.setParamUnmeas(&trgt, 2);
+
+		KinFit.addConstraint(&massConstrProton);
+		KinFit.addConstraint(&energyConservation);
+		KinFit.addConstraint(&pxConservation);
+		KinFit.addConstraint(&pyConservation);
+		KinFit.addConstraint(&pzConservation);
+
+		KinFit.setMaxNbIter(50);  // number of maximal iterations
+		KinFit.setMaxDeltaS(5e-5);  // max Delta chi2
+		KinFit.setMaxF(1e-4);  // max sum of constraints
+		KinFit.setVerbosity(1);  // verbosity level
+		KinFit.fit();
+
+		fitPhoton1 = (*ph1.getCurr4Vec());
+		fitPhoton2 = (*ph2.getCurr4Vec());
+		fitProton = (*pr.getCurr4Vec());
+
+		std::cout << "Fit result: " << std::endl;
+		KinFit.print();
+		ndf = KinFit.getNDF();
+		chisq = KinFit.getS();
 		prob = TMath::Prob(chisq, ndf);
+		std::cout << "\nProbability: " << prob << "\tchi^2: " << chisq << std::endl;
 
 	}
 
