@@ -247,7 +247,7 @@ void TA2KinFitPhysics::PostInit()
 
 /* Main method for applying the physics related stuff */
 void TA2KinFitPhysics::Reconstruct()
-{if (!init) PrintError("", "No PostInit() executed!", EErrFatal);
+{if (!init) PrintError("No PostInit() executed!", "Reconstruct()", EErrFatal);
 	//Perform basic physics tasks
 	TA2BasePhysics::Reconstruct();
 
