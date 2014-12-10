@@ -319,7 +319,9 @@ void TA2KinFitPhysics::Reconstruct()
 		std::cout << ", total " << nParticles << " particles for further analysis" << std::endl;
 	}
 
-
+static int number_event = 0;
+static int number_matches = 0;
+number_event++;
 
 std::cout << "KinFitter status: " << KinFit.getStatus() << std::endl;
 KinFit.print();
@@ -355,7 +357,7 @@ KinFit.print();
 			mMiss = missProton.M();
 			protEexpect = missProton.E() - missProton.M();
 		}
-
+number_matches++;
 
 		/* prepare kinematic fit */
 		int err;
@@ -477,7 +479,8 @@ KinFit.print();
 		std::cout << "\nProbability: " << prob << "\tchi^2: " << chisq << std::endl;
 
 	}
-
+std::cout << "Current event: " << number_event << "\taccepted: "
+          << number_matches << std::endl << std::endl;
 
 
 
