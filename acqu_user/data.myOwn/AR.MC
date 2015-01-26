@@ -46,7 +46,9 @@ Branch:   emwpc         1024
 #ROOT file(s) (GEANT4 output) to be analysed. Add more lines for more files
 ##Liste am besten erstellen, indem ins Verzeichnis gewechselt wird und die Dateien mit ls -1 angezeigt werden (evtl. mit grep etc. filtern)
 #
-TreeFile:	/run/media/wagners/787c785e-bdb0-428f-8160-7c732ab5f090/home/wagners/Desktop/g4_sim.root
+#TreeFile:	/run/media/wagners/787c785e-bdb0-428f-8160-7c732ab5f090/home/wagners/Desktop/g4_sim.root
+TreeFile:	/home/wagners/g4_sim_pi0_gg_00.root
+#TreeFile:	/home/wagners/g4_sim_eta_gg_00.root
 #TreeFile:	/data/simulation/background/channels/g4_sim/g4_sim_etap_e+e-g_01.root
 #TreeFile:	/data/simulation/background/channels/g4_sim/g4_sim_etap_e+e-g_02.root
 #TreeFile:	/data/simulation/background/channels/g4_sim/g4_sim_etap_e+e-g_03.root
