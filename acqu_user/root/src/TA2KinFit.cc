@@ -16,7 +16,7 @@ TA2KinFit::~TA2KinFit()
 
 int TA2KinFit::fillMatrixDiagonal(TMatrixD* m, Double_t* e, int rows, int cols)
 {
-	if (m->IsValid()) {
+	if (!m->IsValid()) {
 		fprintf(stderr, "Error: Matrix is not valid!\n");
 		return 1;
 	}
@@ -40,3 +40,26 @@ int TA2KinFit::fillSquareMatrixDiagonal(TMatrixD* m, Double_t* e, int rows)
 	return fillMatrixDiagonal(m, e, rows, rows);
 }
 
+void TA2KinFit::sigmaEThetaPhi(TA2Particle& part, double* err)
+{
+	//err = {part.GetSigmaE(), part.GetSigmaTheta(), part.GetSigmaPhi()};  //C++11 not on cmake build flags...
+	err[0] = part.GetSigmaE();
+	err[1] = part.GetSigmaTheta();
+	err[2] = part.GetSigmaPhi();
+	double* p = err;
+	// square array
+	for (; p-err < 3; p++)
+		*p *= *p;
+}
+
+void TA2KinFit::sigmaEThetaPhi(TA2Particle* part, double* err)
+{
+	//err = {part->GetSigmaE(), part->GetSigmaTheta(), part->GetSigmaPhi()};  //C++11 not on cmake build flags...
+	err[0] = part->GetSigmaE();
+	err[1] = part->GetSigmaTheta();
+	err[2] = part->GetSigmaPhi();
+	double* p = err;
+	// square array
+	for (; p-err < 3; p++)
+		*p *= *p;
+}
