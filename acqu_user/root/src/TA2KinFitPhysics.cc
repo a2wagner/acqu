@@ -6,13 +6,21 @@
 
 #include "TA2KinFitPhysics.h"
 
+enum { ESpeedInfo = 1000, EDebug };
+
+static const Map_t kPhysics[] = {
+	{"SpeedInfo:", ESpeedInfo},
+	{"Debug:", EDebug},
+	{NULL, -1}
+};
+
 ClassImp(TA2KinFitPhysics)
 
 //-----------------------------------------------------------------------------
 
 TA2KinFitPhysics::TA2KinFitPhysics(const char* Name, TA2Analysis* Analysis) : TA2BasePhysics(Name, Analysis)
 {
-init = false;
+	AddCmdList(kPhysics);  // enables keyword recognition in SetConfig
 }
 
 //-----------------------------------------------------------------------------
@@ -69,16 +77,30 @@ TA2KinFitPhysics::~TA2KinFitPhysics()
 
 void TA2KinFitPhysics::SetConfig(Char_t* line, Int_t key)
 {
-	// default SetConfig()
-	TA2BasePhysics::SetConfig(line, key);
+	char file_path[128];
+	char cut_name[64];
+
+	switch (key) {
+	case ESpeedInfo:
+		speed_info = true;
+		std::cout << "Analysis speed information will be printed" << std::endl;
+		break;
+	case EDebug:
+		dbg = true;
+		std::cout << "Some additional information for debugging will be printed" << std::endl;
+	default:
+		// default SetConfig()
+		TA2BasePhysics::SetConfig(line, key);
+		break;
+	}
 }
 
 //---------------------------------------------------------------------------
 
 void TA2KinFitPhysics::LoadVariable()
 {
-    //Call default LoadVariable()
-    TA2BasePhysics::LoadVariable();
+	//Call default LoadVariable()
+	TA2BasePhysics::LoadVariable();
 
 	// number of particles
 	TA2DataManager::LoadVariable("nParticles", &nParticles, EISingleX);
@@ -142,12 +164,29 @@ void TA2KinFitPhysics::LoadVariable()
 	TA2DataManager::LoadVariable("invMass2CB1TAPS", &invMass2CB1TAPS, EDSingleX);
 	TA2DataManager::LoadVariable("invMass6CB", &invMass6CB, EDSingleX);
 	TA2DataManager::LoadVariable("invMass6CB1TAPS", &invMass6CB1TAPS, EDSingleX);
+
+	// kinematic fit results
+	TA2DataManager::LoadVariable("chisq", &chisq, EDSingleX);
+	TA2DataManager::LoadVariable("prob", &prob, EDSingleX);
+	TA2DataManager::LoadVariable("pi0_mass_fitted", &pi0_mass_fitted, EDSingleX);
+	TA2DataManager::LoadVariable("n_iter", &n_iter, EISingleX);
+	TA2DataManager::LoadVariable("fit_status", &fit_status, EISingleX);
+
+	TA2DataManager::LoadVariable("photon1_pullE", &photon1_pullE, EDSingleX);
+	TA2DataManager::LoadVariable("photon1_pullTheta", &photon1_pullTheta, EDSingleX);
+	TA2DataManager::LoadVariable("photon1_pullPhi", &photon1_pullPhi, EDSingleX);
+	TA2DataManager::LoadVariable("photon2_pullE", &photon2_pullE, EDSingleX);
+	TA2DataManager::LoadVariable("photon2_pullTheta", &photon2_pullTheta, EDSingleX);
+	TA2DataManager::LoadVariable("photon2_pullPhi", &photon2_pullPhi, EDSingleX);
+	TA2DataManager::LoadVariable("proton_pullE", &proton_pullE, EDSingleX);
+	TA2DataManager::LoadVariable("proton_pullTheta", &proton_pullTheta, EDSingleX);
+	TA2DataManager::LoadVariable("proton_pullPhi", &proton_pullPhi, EDSingleX);
 }
 
 //---------------------------------------------------------------------------
 
 void TA2KinFitPhysics::PostInit()
-{init = true;
+{
 	std::cout << std::endl;  // insert an empty line
 	// Check whether simulated or measured data will be processed
 	if (gAR->GetProcessType() == EMCProcess) {
@@ -247,14 +286,14 @@ void TA2KinFitPhysics::PostInit()
 
 /* Main method for applying the physics related stuff */
 void TA2KinFitPhysics::Reconstruct()
-{if (!init) PrintError("No PostInit() executed!", "Reconstruct()", EErrFatal);
+{
 	//Perform basic physics tasks
 	TA2BasePhysics::Reconstruct();
 
 	//Initialise array counters
 	VarInit();
 
-	Char_t currentFile[1024];
+	Char_t currentFile[256];
 	gUAN->ReadRunName(currentFile);  // save filename without path and ending in the specified char array
 
 	if (dbg)
@@ -319,13 +358,6 @@ void TA2KinFitPhysics::Reconstruct()
 		std::cout << ", total " << nParticles << " particles for further analysis" << std::endl;
 	}
 
-static int number_event = 0;
-static int number_matches = 0;
-number_event++;
-
-std::cout << "KinFitter status: " << KinFit.getStatus() << std::endl;
-KinFit.print();
-
 	TLorentzVector tmpState(0., 0., 0., 0.);
 	int chargedPart[N_FINAL_STATE];
 	int neutralPart[N_FINAL_STATE];
@@ -337,7 +369,7 @@ KinFit.print();
 
 		nCharged = nNeutral = 0;
 		for (unsigned int i = 0; i < N_FINAL_STATE; i++) {
-			if (particles[i].HasDetector(EDetPID) || particles[i].HasDetector(EDetVeto))
+			if (particles[i].HasDetector(EDetPID) || (particles[i].HasDetector(EDetVeto) || (i == nParticlesCB && nParticlesTAPS == 1) ) )
 				chargedPart[nCharged++] = i;
 			else {
 				neutralPart[nNeutral++] = i;
@@ -357,18 +389,22 @@ KinFit.print();
 			mMiss = missProton.M();
 			protEexpect = missProton.E() - missProton.M();
 		}
-number_matches++;
 
 		/* prepare kinematic fit */
 		int err;
 		int ndf;
-		double chisq;
-		double prob;
+
+		KinFit.reset();
 
 		TVector3 photon1 = particles[neutralPart[0]].GetVect();
 		TVector3 photon2 = particles[neutralPart[1]].GetVect();
 		TVector3 proton = particles[chargedPart[0]].GetVect();
 
+		TRandom3 rand(0);
+		double sigmaPt = .02, sigmaTheta = .05, sigmaPhi = .05;
+		photon1.SetPtThetaPhi(rand.Gaus(photon1.Pt(), sigmaPt), rand.Gaus(photon1.Theta(), sigmaTheta), rand.Gaus(photon1.Phi(), sigmaPhi));
+		photon2.SetPtThetaPhi(rand.Gaus(photon2.Pt(), sigmaPt), rand.Gaus(photon2.Theta(), sigmaTheta), rand.Gaus(photon2.Phi(), sigmaPhi));
+		proton.SetPtThetaPhi(rand.Gaus(proton.Pt(), sigmaPt), rand.Gaus(proton.Theta(), sigmaTheta), rand.Gaus(proton.Phi(), sigmaPhi));
 		TMatrixD covPhoton1;
 		TMatrixD covPhoton2;
 		TMatrixD covProton;
@@ -377,56 +413,50 @@ number_matches++;
 		TLorentzVector fitPhoton2;
 		TLorentzVector fitProton;
 
-		TFitParticlePThetaPhi ph1("neutral1", "neutral1", &photon1, 0., &covPhoton1);
-		TFitParticlePThetaPhi ph2("neutral2", "neutral2", &photon2, 0., &covPhoton2);
-		TFitParticlePThetaPhi pr("charged1", "charged1", &proton, 0., &covProton);
-
-		int rows = 3;  // number of rows equal number of cols
-		Double_t errors[3];
+		int rows = 3;  // number of rows equal to number of cols
+		//Double_t errors[3];
+		//Double_t errors[] = {50, .5, .5};
+		Double_t errors[] = {sigmaPt*sigmaPt*1.2, sigmaTheta*sigmaTheta*1.2, sigmaPhi*sigmaPhi*1.2};
+		//Double_t errors[] = {1., .01, .01};
 		int currPart = neutralPart[0];
-		errors[0] = particles[currPart].GetSigmaE();
-		errors[0] *= errors[0];
-		errors[1] = particles[currPart].GetSigmaPhi();
-		errors[1] *= errors[1];
-		errors[2] = particles[currPart].GetSigmaTheta();
-		errors[2] *= errors[2];
-		if (!KinFit.fillSquareMatrixDiagonal(&covPhoton1, errors, rows))
+		//KinFit.sigmaEThetaPhi(particles[currPart], errors);
+		if (KinFit.fillSquareMatrixDiagonal(&covPhoton1, errors, rows))
 			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
 		currPart = neutralPart[1];
-		errors[0] = particles[currPart].GetSigmaE();
-		errors[0] *= errors[0];
-		errors[1] = particles[currPart].GetSigmaPhi();
-		errors[1] *= errors[1];
-		errors[2] = particles[currPart].GetSigmaTheta();
-		errors[2] *= errors[2];
-		if (!KinFit.fillSquareMatrixDiagonal(&covPhoton2, errors, rows))
+		//KinFit.sigmaEThetaPhi(particles[currPart], errors);
+		if (KinFit.fillSquareMatrixDiagonal(&covPhoton2, errors, rows))
 			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
 		currPart = chargedPart[0];
-		errors[0] = particles[currPart].GetSigmaE();
-		errors[0] *= errors[0];
-		errors[1] = particles[currPart].GetSigmaPhi();
-		errors[1] *= errors[1];
-		errors[2] = particles[currPart].GetSigmaTheta();
-		errors[2] *= errors[2];
-		if (!KinFit.fillSquareMatrixDiagonal(&covProton, errors, rows))
+		//KinFit.sigmaEThetaPhi(particles[currPart], errors);
+		if (KinFit.fillSquareMatrixDiagonal(&covProton, errors, rows))
 			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
 
-		TVector3 beam = Tagged[0].GetVect();
+		printf("Particle 1: sigmaE = %f, sigmaPhi = %f, sigmaTheta = %f\n", particles[0].GetSigmaE(), particles[0].GetSigmaPhi(), particles[0].GetSigmaTheta());
+		particles[0].GetP4().Print();
+		covPhoton1.Print();
+		covPhoton2.Print();
+		covProton.Print();
+
+		TFitParticlePThetaPhi ph1("neutral1", "neutral1", &photon1, 0., &covPhoton1);
+		TFitParticlePThetaPhi ph2("neutral2", "neutral2", &photon2, 0., &covPhoton2);
+		TFitParticlePThetaPhi pr("charged1", "charged1", &proton, MASS_PROTON, &covProton);
+
+		//TVector3 beam = Tagged[0].GetVect();
+		TVector3 beam = trueP4Beam.Vect();
 		TVector3 target = fP4target[0].Vect();
+		printf("target: ");
+		fP4target[0].Print();
+		target.Print();
 		TMatrixD covBeam;
 		TMatrixD covTarget;
-		TFitParticlePThetaPhi bm("beam", "beam", &beam, 0., &covBeam);
-		TFitParticlePThetaPhi trgt("target", "target", &target, 0., &covTarget);
-		errors[0] = Tagged[0].GetSigmaE();
-		errors[0] *= errors[0];
-		errors[1] = Tagged[0].GetSigmaPhi();
-		errors[1] *= errors[1];
-		errors[2] = Tagged[0].GetSigmaTheta();
-		errors[2] *= errors[2];
-		if (!KinFit.fillSquareMatrixDiagonal(&covBeam, errors, rows))
+		//KinFit.sigmaEThetaPhi(Tagged[0], errors);
+		errors[0] = .1; errors[1] = .0001; errors[2] = .0001;
+		if (KinFit.fillSquareMatrixDiagonal(&covBeam, errors, rows))
 			fprintf(stderr, "Error filling covariance matrix with uncertainties\n");
 		covTarget.Zero();
 		covTarget.ResizeTo(3, 3);
+		TFitParticlePThetaPhi bm("beam", "beam", &beam, 0., &covBeam);
+		TFitParticlePThetaPhi trgt("target", "target", &target, MASS_PROTON, &covTarget);
 
 		// energy and momentum constraints have to be defined separately for each component. components can be accessed via enum TFitConstraintEp::component
 		TFitConstraintEp energyConservation("energyConstr", "Energy conservation constraint", 0, TFitConstraintEp::E, 0.);
@@ -443,45 +473,86 @@ number_matches++;
 		pzConservation.addParticles2(&ph1, &ph2, &pr);
 		TFitConstraintM massConstrProton("massConstr_proton", "mass constraint proton", 0, 0, MASS_PROTON);
 		massConstrProton.addParticle1(&pr);
+		// constraint for pi0 mass
+		TFitConstraintM massConstrPi0("massConstr_pi0", "mass constraint pi0", 0, 0, MASS_PIZERO);
+		massConstrPi0.addParticles1(&ph1, &ph2);
 
 		//TKinFitter fit;
 		KinFit.addMeasParticle(&ph1);
-		KinFit.addMeasParticle(&ph1);
+		KinFit.addMeasParticle(&ph2);
 		KinFit.addMeasParticle(&pr);
 		KinFit.setParamUnmeas(&pr, 0);  // proton energy unmeasured
 		KinFit.addMeasParticle(&bm);
-		KinFit.addMeasParticle(&trgt);
-		KinFit.setParamUnmeas(&trgt, 0);
-		KinFit.setParamUnmeas(&trgt, 1);
-		KinFit.setParamUnmeas(&trgt, 2);
+		KinFit.addUnmeasParticle(&trgt);
 
-		KinFit.addConstraint(&massConstrProton);
+		//KinFit.addConstraint(&massConstrProton);
 		KinFit.addConstraint(&energyConservation);
 		KinFit.addConstraint(&pxConservation);
 		KinFit.addConstraint(&pyConservation);
 		KinFit.addConstraint(&pzConservation);
+		//KinFit.addConstraint(&massConstrPi0);
 
 		KinFit.setMaxNbIter(50);  // number of maximal iterations
 		KinFit.setMaxDeltaS(5e-5);  // max Delta chi2
 		KinFit.setMaxF(1e-4);  // max sum of constraints
-		KinFit.setVerbosity(1);  // verbosity level
+		// set verbosity level
+		if (dbg)
+			KinFit.setVerbosity(3);
+		else
+			KinFit.setVerbosity(0);
 		KinFit.fit();
 
 		fitPhoton1 = (*ph1.getCurr4Vec());
 		fitPhoton2 = (*ph2.getCurr4Vec());
 		fitProton = (*pr.getCurr4Vec());
 
+		// get the pulls from the fit
+		TMatrixD pullsPhoton1 = *(ph1.getPull());
+		TMatrixD pullsPhoton2 = *(ph2.getPull());
+		TMatrixD pullsProton = *(pr.getPull());
+
+		photon1_pullE = pullsPhoton1(0,0);
+		photon1_pullTheta = pullsPhoton1(1,0);
+		photon1_pullPhi = pullsPhoton1(2,0);
+		photon2_pullE = pullsPhoton2(0,0);
+		photon2_pullTheta = pullsPhoton2(1,0);
+		photon2_pullPhi = pullsPhoton2(2,0);
+		proton_pullE = pullsProton(0,0);
+		proton_pullTheta = pullsProton(1,0);
+		proton_pullPhi = pullsProton(2,0);
+
+		// skip plotting pulls which are not a number
+		if (isnan(photon1_pullE))
+			photon1_pullE = EBufferEnd;
+		if (isnan(photon1_pullTheta))
+			photon1_pullTheta = EBufferEnd;
+		if (isnan(photon1_pullPhi))
+			photon1_pullPhi = EBufferEnd;
+		if (isnan(photon2_pullE))
+			photon2_pullE = EBufferEnd;
+		if (isnan(photon2_pullTheta))
+			photon2_pullTheta = EBufferEnd;
+		if (isnan(photon2_pullPhi))
+			photon2_pullPhi = EBufferEnd;
+		if (isnan(proton_pullE))
+			proton_pullE = EBufferEnd;
+		if (isnan(proton_pullTheta))
+			proton_pullTheta = EBufferEnd;
+		if (isnan(proton_pullPhi))
+			proton_pullPhi = EBufferEnd;
+
 		std::cout << "Fit result: " << std::endl;
-		KinFit.print();
+		//KinFit.print();
 		ndf = KinFit.getNDF();
 		chisq = KinFit.getS();
 		prob = TMath::Prob(chisq, ndf);
 		std::cout << "\nProbability: " << prob << "\tchi^2: " << chisq << std::endl;
+		//pi0_mass = (TLorentzVector(photon1, photon1.Pt()) + TLorentzVector(photon2, photon2.Pt())).M();
+		pi0_mass_fitted = (fitPhoton1 + fitPhoton2).M();
+		n_iter = KinFit.getNbIter();
+		fit_status = KinFit.getStatus();  // Status: -1: "NO FIT PERFORMED", 10: "RUNNING", 0: "CONVERGED", 1: "NOT CONVERGED", -10: "ABORTED"; should only return 0 or 1
 
 	}
-std::cout << "Current event: " << number_event << "\taccepted: "
-          << number_matches << std::endl << std::endl;
-
 
 
 
@@ -609,6 +680,16 @@ void TA2KinFitPhysics::GetTrueParticles()
 
 void TA2KinFitPhysics::VarInit()
 {
+	// Set true particle counters to zero
+	trueNGamma = 0;
+	trueNPosi = 0;
+	trueNElec = 0;
+	trueNMuPls = 0;
+	trueNMuMns = 0;
+	trueNPiPls = 0;
+	trueNPiMns = 0;
+	trueNProt = 0;
+
 	//Initally, set single value histograms to EBufferEnd (this value will not be plotted)
 	invM_2neutral = EBufferEnd;
 	protEnergyReconstr = EBufferEnd;
@@ -621,6 +702,23 @@ void TA2KinFitPhysics::VarInit()
 	invMass2CB1TAPS = EBufferEnd;
 	invMass6CB = EBufferEnd;
 	invMass6CB1TAPS = EBufferEnd;
+
+	// set kinematic fit results to EBufferEnd
+	chisq = EBufferEnd;
+	prob = EBufferEnd;
+	pi0_mass_fitted = EBufferEnd;
+	n_iter = EBufferEnd;
+	fit_status = EBufferEnd;
+
+	photon1_pullE = EBufferEnd;
+	photon1_pullTheta = EBufferEnd;
+	photon1_pullPhi = EBufferEnd;
+	photon2_pullE = EBufferEnd;
+	photon2_pullTheta = EBufferEnd;
+	photon2_pullPhi = EBufferEnd;
+	proton_pullE = EBufferEnd;
+	proton_pullTheta = EBufferEnd;
+	proton_pullPhi = EBufferEnd;
 }
 
 //-----------------------------------------------------------------------------

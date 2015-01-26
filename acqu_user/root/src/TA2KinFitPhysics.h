@@ -26,7 +26,7 @@ class TA2KinFitPhysics : public TA2BasePhysics
 	TA2CalArray* fNaI;
 	TA2TAPS_BaF2* fBaF2;
 	TA2Apparatus* fVeto;
-bool init;
+
 	// Flag for checking what data type will be processed
 	Bool_t MC;
 
@@ -38,6 +38,16 @@ bool init;
 
 	// Stuff used for a kinematic fit
 	TA2KinFit KinFit;
+
+	// variables for kinematic fit results
+	double chisq;
+	double prob;
+	double pi0_mass_fitted;
+	int n_iter;
+	int fit_status;
+	double photon1_pullE, photon1_pullTheta, photon1_pullPhi;
+	double photon2_pullE, photon2_pullTheta, photon2_pullPhi;
+	double proton_pullE, proton_pullTheta, proton_pullPhi;
 
 	// ...
 	TA2Particle* particles;
