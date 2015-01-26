@@ -1047,6 +1047,16 @@ unsigned int TA2SaschaPhysics::binomial(int n, int k)
 
 void TA2SaschaPhysics::VarInit()
 {
+	// Set true particle counters to zero
+	trueNGamma = 0;
+	trueNPosi = 0;
+	trueNElec = 0;
+	trueNMuPls = 0;
+	trueNMuMns = 0;
+	trueNPiPls = 0;
+	trueNPiMns = 0;
+	trueNProt = 0;
+
 	//Initally, set single value histograms to EBufferEnd (this value will not be plotted)
 	invM_allPart = EBufferEnd;
 	invM_2charged = EBufferEnd;
