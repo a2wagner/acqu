@@ -197,8 +197,8 @@ void TA2SaschaPhysics::SetConfig(Char_t* line, Int_t key)
 
 void TA2SaschaPhysics::LoadVariable()
 {
-    //Call default LoadVariable()
-    TA2BasePhysics::LoadVariable();
+	//Call default LoadVariable()
+	TA2BasePhysics::LoadVariable();
 
 	// number of particles
 	TA2DataManager::LoadVariable("nParticles", &nParticles, EISingleX);
@@ -1047,15 +1047,15 @@ unsigned int TA2SaschaPhysics::binomial(int n, int k)
 
 void TA2SaschaPhysics::VarInit()
 {
-    // Set true particle counters to zero
-    trueNGamma = 0;
-    trueNPosi = 0;
-    trueNElec = 0;
-    trueNMuPls = 0;
-    trueNMuMns = 0;
-    trueNPiPls = 0;
-    trueNPiMns = 0;
-    trueNProt = 0;
+	// Set true particle counters to zero
+	trueNGamma = 0;
+	trueNPosi = 0;
+	trueNElec = 0;
+	trueNMuPls = 0;
+	trueNMuMns = 0;
+	trueNPiPls = 0;
+	trueNPiMns = 0;
+	trueNProt = 0;
 
 	//Initally, set single value histograms to EBufferEnd (this value will not be plotted)
 	invM_allPart = EBufferEnd;
