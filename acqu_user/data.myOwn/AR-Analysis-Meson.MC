@@ -85,7 +85,7 @@ TriggerParam:   500.0    1.0     2      65535   0      0      0	     73
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 # Print some additional information for debugging purposes
-#Debug:
+Debug:
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
@@ -304,6 +304,23 @@ Display: 1D invMass2CB 1200 0 1200
 Display: 1D invMass2CB1TAPS 1200 0 1200
 Display: 1D invMass6CB 1200 0 1200
 Display: 1D invMass6CB1TAPS 1200 0 1200
+
+# Results KinFit
+Display: 1D chisq 1000 0 100
+Display: 1D prob 1000 0 1
+Display: 1D pi0_mass_fitted 200 100 200
+Display: 1D n_iter 50 0 50
+Display: 1D fit_status 20 -10 10
+
+Display: 1D photon1_pullE 100 -2 2
+Display: 1D photon1_pullTheta 100 -2 2
+Display: 1D photon1_pullPhi 100 -2 2
+Display: 1D photon2_pullE 100 -2 2
+Display: 1D photon2_pullTheta 100 -2 2
+Display: 1D photon2_pullPhi 100 -2 2
+Display: 1D proton_pullE 100 -2 2
+Display: 1D proton_pullTheta 100 -2 2
+Display: 1D proton_pullPhi 100 -2 2
 
 # Prompt
 Display: 1D invM_protE_prompt 1600 0 1600
