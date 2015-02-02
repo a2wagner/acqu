@@ -105,7 +105,8 @@ TreeFile:	/home/wagners/g4_sim_pi0_gg_00.root
 BatchDir: out/
 #
 #Directory to save any created ROOT files (include final '/')
-Directory:  /data/analysis/
+#Directory:  /data/analysis/
+Directory:  /home/wagners/
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #
 #- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
