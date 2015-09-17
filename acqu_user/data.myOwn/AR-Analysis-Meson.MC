@@ -7,7 +7,8 @@ Reconstruct:
 # CaLib configuration
 #
 # General:      dbhost                  dbname   dbuser      dbpass        calibration
-Use-CaLib:      a2calib.online.a2.kph   CaLib_calib    calib       basel10       ETAP_Aug_12
+#Use-CaLib:      a2calib.online.a2.kph   CaLib_calib    calib       basel10       ETAP_Aug_12
+Use-CaLib:	blaster		CaLib_2013_10-Present	calib	basel10		2015-MC-eta_prime
 #Use-CaLib:      a2calib.online.a2.kph   2004_01-2012_08    calib       basel10       2012_08_EtaP_Ott
 #
 # miscellaneous calibrations    # target position  (0=off/1=on)
